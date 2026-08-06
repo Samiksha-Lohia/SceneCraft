@@ -5,11 +5,17 @@ export class DocumentDto {
     this.title = doc.title;
     this.originalFilename = doc.originalFilename;
     this.fileType = doc.fileType;
-    this.storageUrl = doc.storageUrl;
     this.status = doc.status;
     this.wordCount = doc.wordCount || 0;
     this.totalScenes = doc.totalScenes || 0;
     this.uploadedAt = doc.uploadedAt;
+
+    // Secure Storage URL: route-relative for local storage, direct for cloud/S3
+    if (doc.storageUrl && !doc.storageUrl.startsWith('http')) {
+      this.storageUrl = `/api/documents/${this.id}/download`;
+    } else {
+      this.storageUrl = doc.storageUrl || '';
+    }
   }
 
   static toResponse(doc) {

@@ -4,7 +4,7 @@ import { requireDocumentOwnership } from '../middleware/ownership.middleware.js'
 import { validate } from '../middleware/validate.middleware.js';
 import { documentIdParamSchema, sceneIdParamSchema } from '../validators/document.validator.js';
 import * as sceneService from '../services/scene.service.js';
-import { sendSuccess } from '../utilities/response.js';
+import { sendSuccess, sendPaginated } from '../utilities/response.js';
 
 const router = Router({ mergeParams: true });
 
@@ -15,8 +15,15 @@ router.use(authenticate);
  */
 router.get('/', validate(documentIdParamSchema), requireDocumentOwnership, async (req, res, next) => {
   try {
-    const scenes = await sceneService.getScenesForDocument(req.params.documentId);
-    sendSuccess(res, scenes, 200, 'Scenes retrieved.');
+    const page = req.query.page ? parseInt(req.query.page, 10) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
+
+    const { results, pagination } = await sceneService.getScenesForDocument(req.params.documentId, page, limit);
+    if (pagination) {
+      sendPaginated(res, results, pagination, 'Scenes retrieved.');
+    } else {
+      sendSuccess(res, results, 200, 'Scenes retrieved.');
+    }
   } catch (err) {
     next(err);
   }

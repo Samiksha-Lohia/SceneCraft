@@ -13,7 +13,18 @@ router.use(authenticate);
 
 router.get('/', validate(documentIdParamSchema), validate(searchQuerySchema), requireDocumentOwnership, async (req, res, next) => {
   try {
-    const results = await searchService.semanticSearch(req.params.documentId, req.query.q);
+    const { q, character, sceneRange, sceneRangeFrom, sceneRangeTo, mood } = req.query;
+    
+    // Package filters
+    const filters = {
+      character,
+      sceneRange,
+      sceneRangeFrom,
+      sceneRangeTo,
+      mood,
+    };
+
+    const results = await searchService.semanticSearch(req.params.documentId, q, filters);
     sendSuccess(res, results, 200, 'Semantic search completed.');
   } catch (err) {
     next(err);

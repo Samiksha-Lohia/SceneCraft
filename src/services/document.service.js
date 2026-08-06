@@ -14,24 +14,10 @@ import { uploadFile, deleteFile } from './storage.service.js';
 import { pipelineQueue } from '../queues/pipeline.queue.js';
 import { DocumentDto } from '../dtos/document.dto.js';
 import { NotFoundError } from '../utilities/custom-errors.js';
-import STAGES, { STAGE_LIST } from '../constants/stages.js';
+import STAGES, { STAGE_LIST, STAGE_DEPENDENCIES } from '../constants/stages.js';
 import logger from '../utilities/logger.js';
 
-/**
- * Pipeline dependency map: each stage lists which stages must complete before it.
- */
-const STAGE_DEPENDENCIES = {
-  [STAGES.PARSING]:       [],
-  [STAGES.SCENES]:        [STAGES.PARSING],
-  [STAGES.CHARACTERS]:    [STAGES.SCENES],
-  [STAGES.RELATIONSHIPS]: [STAGES.CHARACTERS],
-  [STAGES.TIMELINE]:      [STAGES.SCENES],
-  [STAGES.DIALOGUE]:      [STAGES.SCENES],
-  [STAGES.MOOD]:          [STAGES.SCENES],
-  [STAGES.ARC]:           [STAGES.CHARACTERS, STAGES.MOOD],
-  [STAGES.CONTINUITY]:    [STAGES.RELATIONSHIPS, STAGES.TIMELINE],
-  [STAGES.EMBEDDINGS]:    [STAGES.ARC, STAGES.DIALOGUE],
-};
+// STAGE_DEPENDENCIES is imported from constants/stages.js (single source of truth).
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -80,14 +66,30 @@ const uploadDocument = async (userId, file) => {
 };
 
 /**
- * List all documents belonging to a user.
+ * List all documents belonging to a user, with optional pagination.
  *
  * @param {string} userId
- * @returns {Promise<DocumentDto[]>}
+ * @param {number} [page]
+ * @param {number} [limit]
+ * @returns {Promise<{ results: DocumentDto[], pagination?: object }>}
  */
-const getUserDocuments = async (userId) => {
+const getUserDocuments = async (userId, page, limit) => {
+  if (page !== undefined && limit !== undefined) {
+    const skip = (page - 1) * limit;
+    const total = await documentRepository.count({ userId });
+    const docs = await documentRepository.findByUserId(userId, { skip, limit });
+    return {
+      results: DocumentDto.toResponseList(docs),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
   const docs = await documentRepository.findByUserId(userId);
-  return DocumentDto.toResponseList(docs);
+  return { results: DocumentDto.toResponseList(docs) };
 };
 
 /**
@@ -137,4 +139,26 @@ const deleteDocument = async (documentId) => {
   logger.info(`Document ${documentId} and all related records deleted.`);
 };
 
-export { uploadDocument, getUserDocuments, getDocumentById, deleteDocument };
+/**
+ * Update a document's title.
+ *
+ * @param {string} documentId
+ * @param {string} userId    - Used to confirm ownership at the service layer.
+ * @param {string} title
+ * @returns {Promise<DocumentDto>}
+ */
+const updateDocumentTitle = async (documentId, userId, title) => {
+  const doc = await documentRepository.findById(documentId);
+  if (!doc) throw new NotFoundError('Document not found.');
+
+  // Service-layer ownership guard (belt-and-suspenders alongside route middleware)
+  if (doc.userId.toString() !== userId.toString()) {
+    const { ForbiddenError } = await import('../utilities/custom-errors.js');
+    throw new ForbiddenError('You do not have access to this document.');
+  }
+
+  const updated = await documentRepository.updateById(documentId, { title });
+  return DocumentDto.toResponse(updated);
+};
+
+export { uploadDocument, getUserDocuments, getDocumentById, deleteDocument, updateDocumentTitle };

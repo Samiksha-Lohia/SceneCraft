@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import config from './env.js';
+import logger from '../utilities/logger.js';
 
 let redisClient = null;
 
@@ -22,23 +23,23 @@ const getRedisClient = () => {
     });
 
     redisClient.on('connect', () => {
-      console.log('Redis client attempting connection...');
+      logger.info('Redis client attempting connection...');
     });
 
     redisClient.on('ready', () => {
-      console.log('Redis client connected and ready.');
+      logger.info('Redis client connected and ready.');
     });
 
     redisClient.on('error', (err) => {
-      console.error(`Redis connection error: ${err.message}`);
+      logger.error(`Redis connection error: ${err.message}`);
     });
 
     redisClient.on('close', () => {
-      console.warn('Redis connection closed.');
+      logger.warn('Redis connection closed.');
     });
 
     redisClient.on('reconnecting', (delay) => {
-      console.log(`Redis reconnecting in ${delay}ms...`);
+      logger.info(`Redis reconnecting in ${delay}ms...`);
     });
   }
   return redisClient;

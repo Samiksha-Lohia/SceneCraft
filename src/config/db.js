@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import config from './env.js';
+import logger from '../utilities/logger.js';
 
 const connectDB = async () => {
   try {
@@ -7,18 +8,18 @@ const connectDB = async () => {
       autoIndex: true, // Build indexes automatically in MongoDB
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    logger.info(`MongoDB Connected: ${conn.connection.host}`);
     
     // Additional listeners for ongoing connection management
     mongoose.connection.on('error', (err) => {
-      console.error(`MongoDB connection error: ${err}`);
+      logger.error(`MongoDB connection error: ${err}`);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('MongoDB disconnected. Attempting to reconnect...');
+      logger.warn('MongoDB disconnected. Attempting to reconnect...');
     });
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
+    logger.error(`Error connecting to MongoDB: ${error.message}`);
     process.exit(1);
   }
 };
