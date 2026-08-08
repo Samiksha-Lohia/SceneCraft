@@ -6,7 +6,8 @@ import CharactersTab from './CharactersTab';
 import RelationshipsTab from './RelationshipsTab';
 import TimelineTab from './TimelineTab';
 import StoryArcTab from './StoryArcTab';
-
+import ContinuityTab from './ContinuityTab';
+import SearchTab from './SearchTab';
 
 import { 
   ArrowLeft, 
@@ -168,8 +169,15 @@ export default function Workspace({ documentId, onBack }) {
             {activeTab === 'relationships' && <RelationshipsTab documentId={documentId} />}
             {activeTab === 'timeline' && <TimelineTab documentId={documentId} />}
             {activeTab === 'arc' && <StoryArcTab documentId={documentId} />}
-            {activeTab === 'continuity' && <div className="text-center py-12 text-slate-400">Continuity Checker coming in Phase 6</div>}
-            {activeTab === 'search' && <div className="text-center py-12 text-slate-400">Semantic Search coming in Phase 6</div>}
+            {activeTab === 'continuity' && <ContinuityTab documentId={documentId} />}
+            {activeTab === 'search' && (
+              <SearchTab 
+                documentId={documentId} 
+                onNavigateToScene={(sceneNum) => {
+                  setActiveTab('scenes');
+                }} 
+              />
+            )}
           </div>
         </main>
 
