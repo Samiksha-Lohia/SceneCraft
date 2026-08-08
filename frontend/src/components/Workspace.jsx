@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import OverviewTab from './OverviewTab';
-// We'll import other tabs as they are created
+import ScenesTab from './ScenesTab';
+import CharactersTab from './CharactersTab';
+
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -157,8 +159,8 @@ export default function Workspace({ documentId, onBack }) {
           {/* Subtle Page line overlay to simulate notebook paper */}
           <div className="max-w-6xl mx-auto">
             {activeTab === 'overview' && <OverviewTab documentId={documentId} />}
-            {activeTab === 'scenes' && <div className="text-center py-12 text-slate-400">Scenes Explorer coming in Phase 4</div>}
-            {activeTab === 'characters' && <div className="text-center py-12 text-slate-400">Characters Profile coming in Phase 4</div>}
+            {activeTab === 'scenes' && <ScenesTab documentId={documentId} />}
+            {activeTab === 'characters' && <CharactersTab documentId={documentId} />}
             {activeTab === 'relationships' && <div className="text-center py-12 text-slate-400">Relationship Graph coming in Phase 5</div>}
             {activeTab === 'timeline' && <div className="text-center py-12 text-slate-400">Timeline coming in Phase 5</div>}
             {activeTab === 'arc' && <div className="text-center py-12 text-slate-400">Story Arc coming in Phase 5</div>}
