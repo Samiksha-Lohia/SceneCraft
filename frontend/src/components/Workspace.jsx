@@ -3,6 +3,10 @@ import { api } from '../services/api';
 import OverviewTab from './OverviewTab';
 import ScenesTab from './ScenesTab';
 import CharactersTab from './CharactersTab';
+import RelationshipsTab from './RelationshipsTab';
+import TimelineTab from './TimelineTab';
+import StoryArcTab from './StoryArcTab';
+
 
 import { 
   ArrowLeft, 
@@ -161,9 +165,9 @@ export default function Workspace({ documentId, onBack }) {
             {activeTab === 'overview' && <OverviewTab documentId={documentId} />}
             {activeTab === 'scenes' && <ScenesTab documentId={documentId} />}
             {activeTab === 'characters' && <CharactersTab documentId={documentId} />}
-            {activeTab === 'relationships' && <div className="text-center py-12 text-slate-400">Relationship Graph coming in Phase 5</div>}
-            {activeTab === 'timeline' && <div className="text-center py-12 text-slate-400">Timeline coming in Phase 5</div>}
-            {activeTab === 'arc' && <div className="text-center py-12 text-slate-400">Story Arc coming in Phase 5</div>}
+            {activeTab === 'relationships' && <RelationshipsTab documentId={documentId} />}
+            {activeTab === 'timeline' && <TimelineTab documentId={documentId} />}
+            {activeTab === 'arc' && <StoryArcTab documentId={documentId} />}
             {activeTab === 'continuity' && <div className="text-center py-12 text-slate-400">Continuity Checker coming in Phase 6</div>}
             {activeTab === 'search' && <div className="text-center py-12 text-slate-400">Semantic Search coming in Phase 6</div>}
           </div>
