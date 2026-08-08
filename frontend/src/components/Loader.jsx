@@ -4,11 +4,14 @@ import { Sparkles, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function Loader({ documentId, file, onComplete, onCancel }) {
+  const [activeDocId, setActiveDocId] = useState(documentId);
   const [jobs, setJobs] = useState([]);
   const [overallProgress, setOverallProgress] = useState(0);
   const [currentStageText, setCurrentStageText] = useState('Initializing upload...');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const pollIntervalRef = React.useRef(null);
+
 
   // Books representation for the left-side animation
   // Reference stack (from bottom to top): RELATIONSHIPS, TIMELINE, SCENES, SCENES, CHARACTERS
@@ -24,18 +27,18 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
 
   // Poll for document processing status
   useEffect(() => {
-    let pollInterval;
     let uploadStarted = false;
 
     const startProcessing = async () => {
       try {
-        let docId = documentId;
+        let docId = activeDocId;
         
         // If file is provided, upload it first
         if (file && !docId) {
           setCurrentStageText('Uploading manuscript...');
           const uploadRes = await api.documents.upload(file);
-          docId = uploadRes._id;
+          docId = uploadRes.id || uploadRes._id;
+          setActiveDocId(docId);
         }
 
         if (!docId) {
@@ -44,7 +47,7 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
 
         // Start polling jobs
         uploadStarted = true;
-        pollInterval = setInterval(() => {
+        pollIntervalRef.current = setInterval(() => {
           checkStatus(docId);
         }, 2000);
 
@@ -59,9 +62,9 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
     startProcessing();
 
     return () => {
-      if (pollInterval) clearInterval(pollInterval);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
-  }, [documentId, file]);
+  }, [activeDocId, file]);
 
   const checkStatus = async (docId) => {
     try {
@@ -111,7 +114,7 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
         setCurrentStageText(`Failed during ${stageLabels[failedStage.stage] || failedStage.stage}`);
         setErrorMsg(failedStage.error || 'A processing pipeline job failed.');
         setLoading(false);
-        if (pollInterval) clearInterval(pollInterval);
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         return;
       }
 
@@ -120,7 +123,7 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
       } else if (completedCount === totalStages && totalStages > 0) {
         setCurrentStageText('Story analysis complete!');
         setLoading(false);
-        clearInterval(pollInterval);
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         // Delay completion navigation slightly for visual satisfaction
         setTimeout(() => {
           onComplete(docId);
