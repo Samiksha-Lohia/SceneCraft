@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
 import Loader from './components/Loader';
+import Workspace from './components/Workspace';
 import './App.css';
 
 function App() {
@@ -48,15 +49,10 @@ function App() {
       )}
 
       {view === 'workspace' && (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100">
-          <p className="text-lg font-medium text-slate-800 mb-4">Workspace placeholder for Document: {selectedDocId}</p>
-          <button 
-            onClick={handleBackToLanding}
-            className="px-4 py-2 bg-slate-950 text-white rounded-md text-sm font-semibold"
-          >
-            Back to landing
-          </button>
-        </div>
+        <Workspace 
+          documentId={selectedDocId}
+          onBack={handleBackToLanding}
+        />
       )}
     </div>
   );
