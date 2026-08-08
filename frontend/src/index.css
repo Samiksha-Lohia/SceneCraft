@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@100..900&display=swap');
+
+@import "tailwindcss";
+
+
+@theme {
+  --font-sans: "Outfit", sans-serif;
+  --font-serif: "Lora", serif;
+  --font-handwriting: "Caveat", cursive;
+
+  --color-notebook-grid: #f3f4f6;
+  --color-notebook-line: #e5e7eb;
+}
+
+/* Notebook grid background utility */
+.notebook-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, var(--color-notebook-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-notebook-grid) 1px, transparent 1px);
+  background-color: #fafbfc;
+}
+
+/* Page flip structure styling */
+.page-flip-container {
+  perspective: 1500px;
+}
+
+.page-sheet {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scrollbar customization to keep standard notebook feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: #1e293b;
+  background-color: #fafbfc;
+}
