@@ -17,6 +17,11 @@ const getHeaders = (isMultipart = false) => {
 // Handle response checks
 const handleResponse = async (response) => {
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem('scenecraft_access_token');
+      localStorage.removeItem('scenecraft_refresh_token');
+      localStorage.removeItem('scenecraft_user');
+    }
     const data = await response.json().catch(() => ({}));
     const errorMsg = data.message || `API Error (Status ${response.status})`;
     throw new Error(errorMsg);
