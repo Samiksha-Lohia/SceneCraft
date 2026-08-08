@@ -36,6 +36,23 @@ import processingJobRepository from '../repositories/processing-job.repository.j
 
 // STAGE_DEPENDENCIES imported from constants/stages.js — single source of truth.
 
+/**
+ * Normalizes responses that should be arrays, extracting the array
+ * if the LLM wrapped it inside a root JSON object.
+ */
+const normalizeArrayResponse = (response) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (response && typeof response === 'object') {
+    const arrayKey = Object.keys(response).find((key) => Array.isArray(response[key]));
+    if (arrayKey) {
+      return response[arrayKey];
+    }
+  }
+  return response;
+};
+
 let worker = null;
 
 const startPipelineWorker = (io) => {
@@ -214,6 +231,10 @@ ${parsedText}`;
 
   const rawScenes = await generateJSON(prompt, schemaHint);
 
+  logger.info(`[Scenes Stage] Raw parsed LLM response: ${JSON.stringify(rawScenes, null, 2)}`);
+
+  const normalizedScenes = normalizeArrayResponse(rawScenes);
+
   const schemaJoi = Joi.array().items(
     Joi.object({
       sceneNumber: Joi.number().integer().required(),
@@ -224,7 +245,7 @@ ${parsedText}`;
     })
   ).required();
 
-  const { value: validatedScenes, error } = schemaJoi.validate(rawScenes);
+  const { value: validatedScenes, error } = schemaJoi.validate(normalizedScenes);
   if (error) {
     throw new Error(`Scene breakdown validation failed: ${error.message}`);
   }
@@ -332,6 +353,8 @@ ${parsedText}`;
 
   const rawCharacters = await generateJSON(prompt, schemaHint);
 
+  const normalizedCharacters = normalizeArrayResponse(rawCharacters);
+
   const characterJoi = Joi.array().items(
     Joi.object({
       name: Joi.string().required(),
@@ -343,7 +366,7 @@ ${parsedText}`;
     })
   ).required();
 
-  const { value: validatedCharacters, error } = characterJoi.validate(rawCharacters);
+  const { value: validatedCharacters, error } = characterJoi.validate(normalizedCharacters);
   if (error) {
     throw new Error(`Character extraction validation failed: ${error.message}`);
   }
@@ -480,6 +503,8 @@ ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})`).join(
 
   const rawRelationships = await generateJSON(prompt, schemaHint);
 
+  const normalizedRelationships = normalizeArrayResponse(rawRelationships);
+
   const relationshipJoi = Joi.array().items(
     Joi.object({
       characterAName: Joi.string().required(),
@@ -496,7 +521,7 @@ ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})`).join(
     })
   ).required();
 
-  const { value: validatedRelationships, error } = relationshipJoi.validate(rawRelationships);
+  const { value: validatedRelationships, error } = relationshipJoi.validate(normalizedRelationships);
   if (error) {
     throw new Error(`Relationships validation failed: ${error.message}`);
   }
@@ -592,6 +617,8 @@ ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})\nSummar
 
   const rawTimeline = await generateJSON(prompt, schemaHint);
 
+  const normalizedTimeline = normalizeArrayResponse(rawTimeline);
+
   const timelineJoi = Joi.array().items(
     Joi.object({
       sceneId: Joi.string().required(),
@@ -601,7 +628,7 @@ ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})\nSummar
     })
   ).required();
 
-  const { value: validatedTimeline, error } = timelineJoi.validate(rawTimeline);
+  const { value: validatedTimeline, error } = timelineJoi.validate(normalizedTimeline);
   if (error) {
     throw new Error(`Timeline validation failed: ${error.message}`);
   }
@@ -841,6 +868,8 @@ ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})\nText:\
 
   const rawIssues = await generateJSON(prompt, schemaHint);
 
+  const normalizedIssues = normalizeArrayResponse(rawIssues);
+
   const continuityJoi = Joi.array().items(
     Joi.object({
       type: Joi.string().valid('attribute-conflict', 'timeline-conflict', 'unexplained-gap').required(),
@@ -850,7 +879,7 @@ ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})\nText:\
     })
   ).required();
 
-  const { value: validatedIssues, error } = continuityJoi.validate(rawIssues);
+  const { value: validatedIssues, error } = continuityJoi.validate(normalizedIssues);
   if (error) {
     throw new Error(`Continuity validation failed: ${error.message}`);
   }
