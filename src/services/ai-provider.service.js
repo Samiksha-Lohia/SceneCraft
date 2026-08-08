@@ -1,9 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import config from '../config/env.js';
 import logger from '../utilities/logger.js';
 
-// Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(config.ai.gemini.apiKey);
+// Initialize Generative AI clients
+const genAI = config.ai.gemini?.apiKey ? new GoogleGenerativeAI(config.ai.gemini.apiKey) : null;
+const groq = config.ai.groq?.apiKey ? new Groq({ apiKey: config.ai.groq.apiKey }) : null;
 
 /**
  * Helper function to execute a function with exponential backoff.
@@ -22,7 +24,8 @@ const retryWithBackoff = async (fn, attempts = 3, initialDelay = 1000) => {
         error.status === 403 || 
         error.message?.includes('API_KEY_INVALID') || 
         error.message?.includes('API key not valid') ||
-        error.message?.includes('invalid API key');
+        error.message?.includes('invalid API key') ||
+        error.message?.includes('Unauthorized');
       
       const isSyntaxError = error instanceof SyntaxError;
 
@@ -63,7 +66,43 @@ const retryWithBackoff = async (fn, attempts = 3, initialDelay = 1000) => {
  * @returns {Promise<object>} Parsed JSON response
  */
 export const generateJSON = async (prompt, schemaHint = null) => {
-  const modelName = 'gemini-2.5-flash';
+  const provider = config.ai.provider || 'gemini';
+
+  if (provider === 'groq') {
+    if (!groq) {
+      throw new Error('Groq client is not initialized. Please verify GROQ_API_KEY in .env');
+    }
+
+    const modelName = 'llama-3.3-70b-versatile';
+    
+    const result = await retryWithBackoff(async () => {
+      const response = await groq.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: modelName,
+        response_format: { type: 'json_object' }
+      });
+
+      const textResponse = response.choices[0]?.message?.content;
+      if (!textResponse) {
+        throw new Error('Received empty response from Groq model');
+      }
+
+      try {
+        return JSON.parse(textResponse.trim());
+      } catch (parseError) {
+        throw new SyntaxError(`Failed to parse Groq response as JSON: ${parseError.message}. Response: ${textResponse}`);
+      }
+    });
+
+    return result;
+  }
+
+  // Default fallback: Gemini
+  if (!genAI) {
+    throw new Error('Gemini client is not initialized. Please verify GEMINI_API_KEY in .env');
+  }
+
+  const modelName = 'gemini-2.0-flash';
   const model = genAI.getGenerativeModel({ model: modelName });
 
   const generationConfig = {
@@ -102,6 +141,10 @@ export const generateJSON = async (prompt, schemaHint = null) => {
  * @returns {Promise<number[]>} Array representing the embedding vector
  */
 export const embedText = async (text) => {
+  if (!genAI) {
+    throw new Error('Gemini client is not initialized for embeddings. Please verify GEMINI_API_KEY in .env');
+  }
+
   const modelName = config.ai.embeddingModel || 'text-embedding-004';
   const model = genAI.getGenerativeModel({ model: modelName });
 

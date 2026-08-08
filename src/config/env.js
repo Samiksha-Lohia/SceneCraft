@@ -42,14 +42,14 @@ const envVarsSchema = Joi.object()
       then: Joi.required(),
       otherwise: Joi.optional().allow(''),
     }),
-    AI_PROVIDER: Joi.string().valid('gemini', 'openai').default('gemini'),
+    AI_PROVIDER: Joi.string().valid('gemini', 'groq').default('gemini'),
     GEMINI_API_KEY: Joi.string().when('AI_PROVIDER', {
       is: 'gemini',
       then: Joi.required(),
       otherwise: Joi.optional().allow(''),
     }),
-    OPENAI_API_KEY: Joi.string().when('AI_PROVIDER', {
-      is: 'openai',
+    GROQ_API_KEY: Joi.string().when('AI_PROVIDER', {
+      is: 'groq',
       then: Joi.required(),
       otherwise: Joi.optional().allow(''),
     }),
@@ -97,8 +97,8 @@ const config = {
     gemini: {
       apiKey: envVars.GEMINI_API_KEY,
     },
-    openai: {
-      apiKey: envVars.OPENAI_API_KEY,
+    groq: {
+      apiKey: envVars.GROQ_API_KEY,
     },
     embeddingModel: envVars.EMBEDDING_MODEL,
   },

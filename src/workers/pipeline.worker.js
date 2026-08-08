@@ -137,7 +137,7 @@ const enqueueReadyStages = async (documentId) => {
     await pipelineQueue.add(
       jobRecord.stage,
       { documentId: documentId.toString(), stage: jobRecord.stage },
-      { jobId: `${documentId}:${jobRecord.stage}` },
+      { jobId: `${documentId}-${jobRecord.stage}` },
     );
   }
 

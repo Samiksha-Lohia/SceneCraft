@@ -58,7 +58,7 @@ const uploadDocument = async (userId, file) => {
   await pipelineQueue.add(
     STAGES.PARSING,
     { documentId: document._id.toString(), stage: STAGES.PARSING, storageUrl, fileType: ext },
-    { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `${document._id}:${STAGES.PARSING}` }
+    { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `${document._id}-${STAGES.PARSING}` }
   );
 
   logger.info(`Document ${document._id} uploaded — pipeline started.`);
