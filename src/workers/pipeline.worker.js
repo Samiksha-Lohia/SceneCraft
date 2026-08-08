@@ -191,6 +191,8 @@ const runScenes = async ({ documentId }) => {
   const prompt = `Analyze the following story text and break it down into consecutive scenes.
 For each scene, extract the scene number, a short title, a 2-sentence summary, the primary location, and the exact text corresponding to this scene from the original text (sceneText).
 
+Return the output as a valid JSON array of scene objects matching the schema.
+
 Story text:
 ${parsedText}`;
 
@@ -305,6 +307,8 @@ For each character:
 4. List their traits (personality/physical).
 5. Provide a description of who they are in the story.
 6. Provide an arcSummary (narrative trajectory/growth).
+
+Return the output as a valid JSON array of character objects matching the schema.
 
 Story text:
 ${parsedText}`;
@@ -441,6 +445,8 @@ For each pair of characters that interact in the story:
 3. Assign a overall sentiment score between -1.0 (extremely negative/hostile) and 1.0 (extremely positive/supportive).
 4. Provide a list of scenes in which they interact, indicating the scene ID, a sentiment score (between -1.0 and 1.0) and a brief justification.
 
+Return the output as a valid JSON array of relationship objects matching the schema.
+
 Scenes list:
 ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})`).join('\n')}
 `;
@@ -563,6 +569,8 @@ const runTimeline = async ({ documentId }) => {
   const prompt = `Analyze the narrative timeline of the following scenes.
 Identify any time markers (e.g. "two days later", "in 1999", "ten years ago") and determine the chronological order of the scenes (which might be different from their sceneNumber order). Also detect if each scene is a flashback.
 
+Return the output as a valid JSON array of timeline event objects matching the schema.
+
 Scenes list:
 ${scenes.map((s) => `Scene ${s.sceneNumber}: "${s.title}" (ID: ${s._id})\nSummary: ${s.summary}`).join('\n')}
 `;
@@ -667,7 +675,9 @@ ${scene.rawText}
 Analyze:
 1. The primary mood of the scene (e.g. tense, joyful, melancholy, peaceful, etc.).
 2. The intensity of this mood on a scale from 0.0 (low) to 1.0 (high).
-3. A set of specific emotion categories (e.g. joy, tension, sadness, mystery, anger, fear) with intensity scores from 0.0 to 1.0.`;
+3. A set of specific emotion categories (e.g. joy, tension, sadness, mystery, anger, fear) with intensity scores from 0.0 to 1.0.
+
+Return the output as a valid JSON object matching the schema.`;
 
     const schemaHint = {
       type: 'OBJECT',
@@ -804,6 +814,8 @@ const runContinuity = async ({ documentId }) => {
   const prompt = `Analyze the following story scenes for continuity errors.
 For each character in the list, track their attributes (status e.g. alive/dead/injured, age, appearance, possessions) across the scenes.
 Flag any contradictions, timeline conflicts, or unexplained gaps.
+
+Return the output as a valid JSON array of continuity issue objects matching the schema.
 
 Characters:
 ${characters.map((c) => `- ${c.name}`).join('\n')}
