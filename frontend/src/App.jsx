@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
+import Loader from './components/Loader';
 import './App.css';
 
 function App() {
@@ -23,6 +24,11 @@ function App() {
     setView('landing');
   };
 
+  const handleUploadComplete = (docId) => {
+    setSelectedDocId(docId);
+    setView('workspace');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 select-none">
       {view === 'landing' && (
@@ -33,15 +39,12 @@ function App() {
       )}
 
       {view === 'loading' && (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-          <p className="text-lg font-medium text-slate-600 mb-4">Loading loader placeholder...</p>
-          <button 
-            onClick={handleBackToLanding}
-            className="px-4 py-2 bg-slate-950 text-white rounded-md text-sm font-semibold"
-          >
-            Cancel
-          </button>
-        </div>
+        <Loader 
+          documentId={selectedDocId}
+          file={fileToUpload}
+          onComplete={handleUploadComplete}
+          onCancel={handleBackToLanding}
+        />
       )}
 
       {view === 'workspace' && (
