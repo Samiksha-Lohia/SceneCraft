@@ -3,6 +3,9 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import mongoose from 'mongoose';
+import { redis } from './config/redis.js';
 
 import config from './config/env.js';
 import logger from './utilities/logger.js';
@@ -12,11 +15,13 @@ import router from './routes/index.js';
 const createApp = () => {
   const app = express();
 
+  app.set('trust proxy', 1);
+
   // ─── Security Headers ──────────────────────────────────────────────────────
   app.use(helmet());
 
   // ─── CORS ──────────────────────────────────────────────────────────────────
-  app.use(cors());
+  app.use(cors({ origin: config.corsAllowedOrigins }));
 
   // ─── HTTP Request Logging ──────────────────────────────────────────────────
   if (config.env !== 'test') {
@@ -34,9 +39,12 @@ const createApp = () => {
   // ─── Global Rate Limiter ───────────────────────────────────────────────────
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200,
+    limit: 200,
     standardHeaders: true,
     legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    }),
     message: { success: false, message: 'Too many requests, please try again later.' },
   });
   app.use('/api', limiter);
@@ -51,8 +59,43 @@ const createApp = () => {
     });
   });
 
-  app.get('/health', (_req, res) => {
-    res.status(200).json({ success: true, message: 'SceneCraft API is running.' });
+  app.get('/health', async (_req, res) => {
+    try {
+      const isMongoUp = mongoose.connection.readyState === 1;
+      let isRedisUp = false;
+      try {
+        const ping = await redis.ping();
+        isRedisUp = ping === 'PONG';
+      } catch (err) {
+        isRedisUp = false;
+      }
+
+      if (!isMongoUp || !isRedisUp) {
+        return res.status(503).json({
+          success: false,
+          message: 'Services unavailable.',
+          services: {
+            mongodb: isMongoUp ? 'up' : 'down',
+            redis: isRedisUp ? 'up' : 'down',
+          },
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'SceneCraft API is running.',
+        services: {
+          mongodb: 'up',
+          redis: 'up',
+        },
+      });
+    } catch (err) {
+      return res.status(503).json({
+        success: false,
+        message: 'Health check failed.',
+        error: err.message,
+      });
+    }
   });
 
   // ─── API Routes ────────────────────────────────────────────────────────────

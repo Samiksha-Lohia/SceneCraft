@@ -35,3 +35,7 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Custom debug folders
+scratch/
+

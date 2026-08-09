@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import config from '../config/env.js';
 import logger from '../utilities/logger.js';
 
@@ -75,4 +75,23 @@ const deleteFile = async (storageUrl, storageKey) => {
   }
 };
 
-export { uploadFile, deleteFile };
+/**
+ * Download a file from S3 and return a Buffer.
+ *
+ * @param {string} storageKey - The S3 key of the file to download
+ * @returns {Promise<Buffer>} The file content as a Buffer
+ */
+const downloadFile = async (storageKey) => {
+  if (config.storage.provider === 's3' && s3Client) {
+    const command = new GetObjectCommand({
+      Bucket: config.storage.s3.bucketName,
+      Key: storageKey,
+    });
+    const response = await s3Client.send(command);
+    const byteArray = await response.Body.transformToByteArray();
+    return Buffer.from(byteArray);
+  }
+  throw new Error('S3 client not initialized or STORAGE_PROVIDER is not s3');
+};
+
+export { uploadFile, deleteFile, downloadFile };

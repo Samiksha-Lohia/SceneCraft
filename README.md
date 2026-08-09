@@ -14,7 +14,6 @@ Create a `.env` file at the root of the project (you can copy `.env.example` as 
 
 - **`AI_PROVIDER`**: Set to `gemini` (default).
 - **`GEMINI_API_KEY`**: Your Google Gemini API Key.
-- **`EMBEDDING_MODEL`**: Set to `text-embedding-004` (default).
 
 ### Other AI Providers (Optional)
 

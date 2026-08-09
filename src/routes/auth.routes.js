@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import * as authService from '../services/auth.service.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -13,7 +13,7 @@ const router = Router();
 // Strict Rate Limiter: 5 attempts per 15 minutes per IP + email identifier
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  limit: 5,
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
@@ -21,7 +21,7 @@ const authLimiter = rateLimit({
   }),
   keyGenerator: (req) => {
     const email = req.body?.email ? req.body.email.toString().toLowerCase().trim() : '';
-    return `${req.ip}:${email}`;
+    return `${ipKeyGenerator(req.ip)}:${email}`;
   },
   handler: (req, res, next) => {
     next(new ApiError(429, 'Too many login or registration attempts. Please try again after 15 minutes.'));

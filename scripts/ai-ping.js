@@ -1,4 +1,5 @@
-import { generateJSON, embedText } from '../src/services/ai-provider.service.js';
+import { generateJSON } from '../src/services/ai-provider.service.js';
+import { buildTextEmbedding } from '../src/analysis/local-analyzer.js';
 import logger from '../src/utilities/logger.js';
 
 async function main() {
@@ -26,15 +27,15 @@ async function main() {
       throw new Error('generateJSON did not return the expected JSON format');
     }
     
-    // 2. Test embedText
-    logger.info('Testing embedText...');
-    const embedding = await embedText('SceneCraft AI Ping');
-    logger.info(`embedText result: array of size ${embedding.length}`);
+    // 2. Test buildTextEmbedding (local)
+    logger.info('Testing buildTextEmbedding (local)...');
+    const embedding = buildTextEmbedding('SceneCraft AI Ping');
+    logger.info(`buildTextEmbedding result: array of size ${embedding.length}`);
     
     if (Array.isArray(embedding) && embedding.length > 0) {
-      logger.info('✓ embedText test passed!');
+      logger.info('✓ buildTextEmbedding test passed!');
     } else {
-      throw new Error('embedText did not return a valid array');
+      throw new Error('buildTextEmbedding did not return a valid array');
     }
     
     logger.info('=== All AI Ping tests passed successfully! ===');

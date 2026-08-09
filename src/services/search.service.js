@@ -1,11 +1,9 @@
 import mongoose from 'mongoose';
-import config from '../config/env.js';
 import characterRepository from '../repositories/character.repository.js';
 import dialogueSummaryRepository from '../repositories/dialogue-summary.repository.js';
 import embeddingRepository from '../repositories/embedding.repository.js';
 import sceneRepository from '../repositories/scene.repository.js';
 import { buildTextEmbedding, cosineSimilarity } from '../analysis/local-analyzer.js';
-import { embedText } from './ai-provider.service.js';
 import { Embedding } from '../models/embedding.model.js';
 import MoodAnalysis from '../models/mood-analysis.model.js';
 
@@ -80,9 +78,7 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
 
 const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
   // Compute query vector
-  const queryVector = config.ai.provider === 'local'
-    ? buildTextEmbedding(query)
-    : await embedText(query);
+  const queryVector = buildTextEmbedding(query);
 
   // Setup filter helpers
   const filterHelpers = {
@@ -126,7 +122,7 @@ const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
 
   // Attempt indexed vector search using aggregation, fallback if offline or not supported
   let ranked = [];
-  const isOffline = process.env.OFFLINE_VECTOR_SEARCH === 'true' || config.ai.provider === 'local';
+  const isOffline = process.env.OFFLINE_VECTOR_SEARCH === 'true';
 
   if (!isOffline) {
     try {

@@ -138,31 +138,3 @@ export const generateJSON = async (prompt, schemaHint = null) => {
 
   return result;
 };
-
-/**
- * Generates vector embedding for the given text.
- *
- * @param {string} text - Text to embed
- * @returns {Promise<number[]>} Array representing the embedding vector
- */
-export const embedText = async (text) => {
-  if (!genAI) {
-    throw new Error('Gemini client is not initialized for embeddings. Please verify GEMINI_API_KEY in .env');
-  }
-
-  const modelName = config.ai.embeddingModel || 'text-embedding-004';
-  const model = genAI.getGenerativeModel({ model: modelName });
-
-  const result = await retryWithBackoff(async () => {
-    const response = await model.embedContent({
-      content: { parts: [{ text }] },
-    });
-    
-    if (!response?.embedding?.values) {
-      throw new Error('Invalid embedding response from model');
-    }
-    return response.embedding.values;
-  });
-
-  return result;
-};

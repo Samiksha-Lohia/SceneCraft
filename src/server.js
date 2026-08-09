@@ -23,7 +23,7 @@ const bootstrap = async () => {
 
   // ─── Initialise Socket.IO ─────────────────────────────────────────────────
   const io = new SocketIOServer(httpServer, {
-    cors: { origin: '*' },
+    cors: { origin: config.corsAllowedOrigins },
   });
   initSocket(io);
 
@@ -49,8 +49,18 @@ const bootstrap = async () => {
   process.on('SIGINT', () => shutdown('SIGINT'));
 };
 
+// ─── Process-Wide Error Handlers ─────────────────────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception thrown:', error);
+  process.exit(1);
+});
+
 bootstrap().catch((err) => {
   // If bootstrap itself throws (e.g. DB connection fails), log and exit.
-  console.error('Fatal startup error:', err);
+  logger.error('Fatal startup error:', err);
   process.exit(1);
 });

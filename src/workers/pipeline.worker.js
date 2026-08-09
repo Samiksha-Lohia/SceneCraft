@@ -1908,9 +1908,7 @@ const runEmbeddings = async ({
       vector: buildTextEmbedding(
         `${scene.title} ${scene.summary} ${scene.rawText || ''}`,
       ),
-      model:
-        config.ai.embeddingModel ||
-        'local-hash-64',
+      model: 'local-hash-64',
     })),
 
     ...characters.map((character) => ({
@@ -1920,9 +1918,7 @@ const runEmbeddings = async ({
       vector: buildTextEmbedding(
         `${character.name} ${character.description || ''} ${(character.traits || []).join(' ')}`,
       ),
-      model:
-        config.ai.embeddingModel ||
-        'local-hash-64',
+      model: 'local-hash-64',
     })),
 
     ...dialogue.map((item) => ({
@@ -1932,9 +1928,7 @@ const runEmbeddings = async ({
       vector: buildTextEmbedding(
         `${item.summaryText} ${(item.keyQuotes || []).join(' ')} ${item.tone || ''}`,
       ),
-      model:
-        config.ai.embeddingModel ||
-        'local-hash-64',
+      model: 'local-hash-64',
     })),
   ];
 

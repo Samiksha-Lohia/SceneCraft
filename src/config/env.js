@@ -53,7 +53,7 @@ const envVarsSchema = Joi.object()
       then: Joi.required(),
       otherwise: Joi.optional().allow(''),
     }),
-    EMBEDDING_MODEL: Joi.string().default('text-embedding-004'),
+    CORS_ORIGIN: Joi.string().optional().allow('').description('Comma-separated allowed origins for CORS'),
   })
   .unknown();
 
@@ -92,6 +92,17 @@ const config = {
       bucketName: envVars.AWS_S3_BUCKET_NAME,
     },
   },
+  corsAllowedOrigins: (() => {
+    const corsOrigin = envVars.CORS_ORIGIN;
+    if (!corsOrigin) {
+      return envVars.NODE_ENV === 'development' ? '*' : [];
+    }
+    const origins = corsOrigin.split(',').map((o) => o.trim());
+    if (origins.includes('*')) {
+      return '*';
+    }
+    return origins;
+  })(),
   ai: {
     provider: envVars.AI_PROVIDER,
     gemini: {
@@ -100,7 +111,6 @@ const config = {
     groq: {
       apiKey: envVars.GROQ_API_KEY,
     },
-    embeddingModel: envVars.EMBEDDING_MODEL,
   },
 };
 

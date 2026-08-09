@@ -19,6 +19,17 @@ const errorHandler = (err, _req, res, _next) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
+  // ─── Multer Error ─────────────────────────────────────────────────────────
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      const maxMb = config.file.maxSizeBytes / (1024 * 1024);
+      message = `File too large. Maximum allowed size is ${maxMb}MB.`;
+    } else {
+      message = `File upload error: ${err.message}`;
+    }
+  }
+
   // ─── Mongoose Validation Error ────────────────────────────────────────────
   if (err instanceof mongoose.Error.ValidationError) {
     statusCode = 400;
