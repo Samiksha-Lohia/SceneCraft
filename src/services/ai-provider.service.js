@@ -76,8 +76,13 @@ export const generateJSON = async (prompt, schemaHint = null) => {
     const modelName = 'llama-3.3-70b-versatile';
     
     const result = await retryWithBackoff(async () => {
+      let formattedPrompt = prompt;
+      if (!/json/i.test(formattedPrompt)) {
+        formattedPrompt += '\n\nIMPORTANT: Return the response as a valid JSON object.';
+      }
+
       const response = await groq.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: formattedPrompt }],
         model: modelName,
         response_format: { type: 'json_object' }
       });
