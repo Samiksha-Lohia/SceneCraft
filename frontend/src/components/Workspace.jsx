@@ -7,7 +7,7 @@ import RelationshipsTab from './RelationshipsTab';
 import TimelineTab from './TimelineTab';
 import StoryArcTab from './StoryArcTab';
 import ContinuityTab from './ContinuityTab';
-import SearchTab from './SearchTab';
+import AskQuestionsTab from './AskQuestionsTab';
 
 import { 
   ArrowLeft, 
@@ -17,10 +17,10 @@ import {
   Clock, 
   BarChart2, 
   ShieldAlert, 
-  Search,
-  Edit2,
-  Check,
-  LayoutDashboard
+  Edit2, 
+  Check, 
+  LayoutDashboard,
+  MessageSquare
 } from 'lucide-react';
 
 export default function Workspace({ documentId, onBack }) {
@@ -65,6 +65,7 @@ export default function Workspace({ documentId, onBack }) {
     { id: 'timeline', label: 'Story Timeline', icon: <Clock className="w-4 h-4" /> },
     { id: 'arc', label: 'Story Arc', icon: <BarChart2 className="w-4 h-4" /> },
     { id: 'continuity', label: 'Continuity', icon: <ShieldAlert className="w-4 h-4" /> },
+    { id: 'ask', label: 'Ask Questions', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
   return (
@@ -108,19 +109,6 @@ export default function Workspace({ documentId, onBack }) {
               {doc?.fileType}
             </span>
           </div>
-        </div>
-
-        {/* Global Semantic Search Trigger/Input */}
-        <div className="relative w-64 md:w-80">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="w-4 h-4 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search story..."
-            onClick={() => setActiveTab('search')} // Redirect or trigger search
-            className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent transition-all"
-          />
         </div>
       </header>
 
@@ -170,14 +158,7 @@ export default function Workspace({ documentId, onBack }) {
             {activeTab === 'timeline' && <TimelineTab documentId={documentId} />}
             {activeTab === 'arc' && <StoryArcTab documentId={documentId} />}
             {activeTab === 'continuity' && <ContinuityTab documentId={documentId} />}
-            {activeTab === 'search' && (
-              <SearchTab 
-                documentId={documentId} 
-                onNavigateToScene={(sceneNum) => {
-                  setActiveTab('scenes');
-                }} 
-              />
-            )}
+            {activeTab === 'ask' && <AskQuestionsTab documentId={documentId} />}
           </div>
         </main>
 

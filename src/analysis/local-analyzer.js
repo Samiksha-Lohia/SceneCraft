@@ -120,13 +120,16 @@ const moodForScene = (text = '') => {
 
   const winner = scored[0];
   const intensity = Math.min(1, Math.max(0.15, winner.score / 5));
+  const primaryMood = winner.score > 0 ? winner.mood.name : 'neutral';
+
   return {
-    primaryMood: winner.score > 0 ? winner.mood.name : 'neutral',
+    primaryMood,
     emotionScores: {
-      joy: winner.mood.name === 'hopeful' ? intensity : 0.15,
-      tension: winner.mood.name === 'tense' ? intensity : 0.25,
-      sadness: winner.mood.name === 'melancholy' ? intensity : 0.1,
-      mystery: winner.mood.name === 'mysterious' ? intensity : 0.1,
+      joy: primaryMood === 'hopeful' ? intensity : 0.1,
+      tension: primaryMood === 'tense' ? intensity : 0.1,
+      sadness: primaryMood === 'melancholy' ? intensity : 0.1,
+      mystery: primaryMood === 'mysterious' ? intensity : 0.1,
+      romantic: primaryMood === 'romantic' ? intensity : 0.1,
     },
     intensity,
   };

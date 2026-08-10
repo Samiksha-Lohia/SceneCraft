@@ -68,19 +68,22 @@ export default function ScenesTab({ documentId }) {
   const getMoodColor = (moodName) => {
     if (!moodName) return 'bg-slate-100 border-slate-200 text-slate-700';
     const m = moodName.toLowerCase();
-    if (m.includes('joy') || m.includes('happy') || m.includes('elated')) {
+    if (m === 'hopeful') {
       return 'bg-green-50 border-green-200 text-green-700';
     }
-    if (m.includes('tension') || m.includes('conflict') || m.includes('anger') || m.includes('fight')) {
+    if (m === 'tense') {
       return 'bg-red-50 border-red-200 text-red-700';
     }
-    if (m.includes('grief') || m.includes('sad') || m.includes('sorrow') || m.includes('death')) {
+    if (m === 'melancholy') {
       return 'bg-blue-50 border-blue-200 text-blue-700';
     }
-    if (m.includes('fear') || m.includes('anxiety') || m.includes('scared') || m.includes('suspense')) {
+    if (m === 'romantic') {
+      return 'bg-rose-50 border-rose-200 text-rose-750';
+    }
+    if (m === 'mysterious') {
       return 'bg-purple-50 border-purple-200 text-purple-700';
     }
-    return 'bg-amber-50 border-amber-200 text-amber-700';
+    return 'bg-slate-50 border-slate-200 text-slate-600';
   };
 
   if (loading) {

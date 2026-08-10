@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "ai:ping": "node scripts/ai-ping.js",
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --experimental-test-module-mocks --test tests/**/*.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.621.0",

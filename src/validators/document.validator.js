@@ -92,6 +92,16 @@ const updateContinuityStatusSchema = {
   }),
 };
 
+const askQuestionSchema = {
+  body: Joi.object({
+    question: Joi.string().min(1).max(1000).required().messages({
+      'any.required': 'Question is required.',
+      'string.min': 'Question must be at least 1 character.',
+      'string.max': 'Question cannot exceed 1000 characters.',
+    }),
+  }),
+};
+
 export {
   documentIdParamSchema,
   sceneIdParamSchema,
@@ -101,4 +111,5 @@ export {
   updateDocumentBodySchema,
   continuityIssueIdParamSchema,
   updateContinuityStatusSchema,
+  askQuestionSchema,
 };

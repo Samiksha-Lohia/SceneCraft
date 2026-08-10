@@ -158,8 +158,8 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
     setErrorMsg('');
     setLoading(true);
     try {
-      await api.jobs.retryStage(documentId, stage);
-      checkStatus(documentId);
+      await api.jobs.retryStage(activeDocId, stage);
+      checkStatus(activeDocId);
     } catch (err) {
       setErrorMsg(err.message);
       setLoading(false);

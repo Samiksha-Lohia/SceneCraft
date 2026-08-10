@@ -5,20 +5,19 @@ import {
   Sparkles, 
   Upload, 
   BookOpen, 
+  Book,
   LogOut, 
-  Maximize2, 
-  Type, 
-  Edit3, 
-  MessageSquare, 
   FileText,
   Trash2,
-  BookMarked
+  X
 } from 'lucide-react';
 
 export default function LandingPage({ onSelectDocument, onStartUpload }) {
   const [user, setUser] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isFlowchartOpen, setIsFlowchartOpen] = useState(false);
   const [authAction, setAuthAction] = useState('demo'); // 'demo' | 'upload'
   const fileInputRef = React.useRef(null);
 
@@ -82,7 +81,7 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
     // If already logged in, see if we have documents, otherwise prompt upload
     if (documents.length > 0) {
       // Open the latest document
-      onSelectDocument(documents[0]._id);
+      onSelectDocument(documents[0].id);
     } else {
       triggerFilePicker();
     }
@@ -104,25 +103,26 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
     <div className="min-h-screen notebook-grid flex flex-col relative overflow-x-hidden">
       
       {/* Header */}
-      <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
+      <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-30">
         <div className="flex items-center gap-2 cursor-pointer">
           <BookOpen className="w-6 h-6 text-slate-900" />
           <span className="font-serif font-bold text-xl tracking-tight text-slate-900">SceneCraft</span>
         </div>
 
-        {/* Center navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500">
-          <a href="#modules" className="hover:text-slate-900 transition-colors">Modules</a>
-          <a href="#how-it-works" className="hover:text-slate-900 transition-colors">How It Works</a>
-          <a href="#use-cases" className="hover:text-slate-900 transition-colors">Use Cases</a>
-          <a href="#architecture" className="hover:text-slate-900 transition-colors">Architecture</a>
-        </nav>
-
         {/* Right Action */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 relative">
           {user ? (
             <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-1.5 rounded-full shadow-xs">
               <span className="text-sm font-medium text-slate-700">Hello, {user.name}</span>
+              
+              <button 
+                onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                className="p-1 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-950 transition-colors"
+                title="Manuscripts History"
+              >
+                {isHistoryOpen ? <BookOpen className="w-4 h-4 text-purple-600" /> : <Book className="w-4 h-4" />}
+              </button>
+
               <button 
                 onClick={handleLogout}
                 className="p-1 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-950 transition-colors"
@@ -130,6 +130,51 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
               >
                 <LogOut className="w-4 h-4" />
               </button>
+              
+              {/* History Dropdown Menu */}
+              {isHistoryOpen && (
+                <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 max-h-96 overflow-y-auto">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-slate-100">
+                    Analyzed Manuscripts ({documents.length})
+                  </h3>
+                  {documents.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">No manuscripts analyzed yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <div
+                          key={doc.id}
+                          onClick={() => {
+                            setIsHistoryOpen(false);
+                            onSelectDocument(doc.id);
+                          }}
+                          className="group flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-all border border-transparent hover:border-slate-100"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden text-left">
+                            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-slate-950 group-hover:text-white transition-colors flex-shrink-0">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold text-slate-800 truncate">{doc.title}</p>
+                              <p className="text-[10px] text-slate-400 truncate uppercase">{doc.fileType} • {doc.wordCount || 0} words</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteDoc(doc.id, e);
+                            }}
+                            className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                            title="Delete story"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <button
@@ -148,12 +193,6 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
         {/* Left column info */}
         <div className="md:col-span-7 flex flex-col items-start text-left space-y-6 max-w-2xl">
           
-          {/* AI STORY ANALYSIS tag */}
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-semibold uppercase tracking-wider text-purple-700">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Story Analysis</span>
-          </div>
-
           {/* Heading */}
           <h1 className="text-5xl md:text-6xl font-serif text-slate-950 leading-tight">
             Understand your story<br />
@@ -185,7 +224,7 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
               Upload your story
             </button>
             <button
-              onClick={handleTryDemo}
+              onClick={() => setIsFlowchartOpen(true)}
               className="px-6 py-3.5 bg-white border border-slate-200 hover:border-slate-400 text-slate-800 rounded-full text-sm font-semibold hover:bg-slate-50 transition-colors"
             >
               See how it works
@@ -196,42 +235,6 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
           <p className="font-handwriting text-2xl text-slate-500 pl-4 pt-1">
             Every story deserves more than a summary.
           </p>
-
-          {/* Library Section (rendered when logged in and has stories) */}
-          {user && documents.length > 0 && (
-            <div className="w-full pt-8 border-t border-slate-100">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <BookMarked className="w-3.5 h-3.5" />
-                Your Analyzed Manuscripts ({documents.length})
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                {documents.map((doc) => (
-                  <div
-                    key={doc._id}
-                    onClick={() => onSelectDocument(doc._id)}
-                    className="group flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl shadow-xs cursor-pointer transition-all"
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0 group-hover:bg-slate-950 group-hover:text-white transition-colors">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <div className="text-left overflow-hidden">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{doc.title}</p>
-                        <p className="text-xs text-slate-500 truncate uppercase">{doc.fileType} • {doc.wordCount || 0} words</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => handleDeleteDoc(doc._id, e)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
-                      title="Delete story"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right column illustration sketch */}
@@ -365,22 +368,64 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
         </div>
       </main>
 
-      {/* Floating Bottom Toolbar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/70 backdrop-blur-md border border-slate-200 shadow-lg px-4 py-2 rounded-2xl flex items-center gap-6 z-20">
-        <button className="p-2 text-slate-500 hover:text-slate-950 rounded-lg hover:bg-slate-100/50 transition-colors" title="Zoom to Fit">
-          <Maximize2 className="w-5 h-5" />
-        </button>
-        <div className="w-px h-5 bg-slate-200"></div>
-        <button className="p-2 text-slate-500 hover:text-slate-950 rounded-lg hover:bg-slate-100/50 transition-colors" title="Add Text">
-          <Type className="w-5 h-5" />
-        </button>
-        <button className="p-2 text-slate-500 hover:text-slate-950 rounded-lg hover:bg-slate-100/50 transition-colors" title="Edit Annotations">
-          <Edit3 className="w-5 h-5" />
-        </button>
-        <button className="p-2 text-slate-500 hover:text-slate-950 rounded-lg hover:bg-slate-100/50 transition-colors" title="Open Comments">
-          <MessageSquare className="w-5 h-5" />
-        </button>
-      </div>
+      {/* Flowchart Modal */}
+      {isFlowchartOpen && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 md:p-8 relative flex flex-col max-h-[85vh]">
+            <button 
+              onClick={() => setIsFlowchartOpen(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-950 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="text-left space-y-4 overflow-y-auto pr-2">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-serif font-bold text-slate-900">Analysis Pipeline Flowchart</h2>
+                <p className="text-sm text-slate-500">Step-by-step overview of how SceneCraft processes your story.</p>
+              </div>
+
+              <div className="relative border-l-2 border-dashed border-slate-200 pl-6 ml-3 py-2 space-y-6">
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-slate-950 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">1. Upload & Parsing</h4>
+                  <p className="text-xs text-slate-500">Manuscript is parsed into plain structured text blocks (PDF, DOCX, TXT).</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-slate-900 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">2. Scene Segmentation</h4>
+                  <p className="text-xs text-slate-500">AI segments the manuscript chronologically into narrative scenes.</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-slate-800 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">3. Character Profiling</h4>
+                  <p className="text-xs text-slate-500">AI extracts characters, maps aliases, details bios, and assigns roles.</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-slate-700 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">4. Relationship Analysis</h4>
+                  <p className="text-xs text-slate-500">AI analyzes interactions and sentiment dynamics between character pairs.</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-slate-600 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">5. Timeline Reconstruction</h4>
+                  <p className="text-xs text-slate-500">Events are chronologically ordered with exact timestamps/labels.</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-purple-600 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">6. Mood & Tension Mapping</h4>
+                  <p className="text-xs text-slate-500">Computes narrative arc tension and tracks primary mood tags per scene.</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-indigo-600 border-2 border-white"></div>
+                  <h4 className="text-sm font-bold text-slate-800">7. Continuity Check & Semantic Embeddings</h4>
+                  <p className="text-xs text-slate-500">Finds plot holes or details mismatches, and builds vector hashes for semantic querying.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Auth Modal overlay */}
       <AuthModal 

@@ -42,17 +42,13 @@ const envVarsSchema = Joi.object()
       then: Joi.required(),
       otherwise: Joi.optional().allow(''),
     }),
-    AI_PROVIDER: Joi.string().valid('gemini', 'groq').default('gemini'),
-    GEMINI_API_KEY: Joi.string().when('AI_PROVIDER', {
-      is: 'gemini',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
-    GROQ_API_KEY: Joi.string().when('AI_PROVIDER', {
-      is: 'groq',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
+    OPENROUTER_API_KEY_1: Joi.string().required().allow('').description('OpenRouter API Key 1'),
+    OPENROUTER_API_KEY_2: Joi.string().required().allow('').description('OpenRouter API Key 2'),
+    OPENROUTER_API_KEY_3: Joi.string().required().allow('').description('OpenRouter API Key 3'),
+    OPENROUTER_MODEL_1: Joi.string().default('google/gemini-2.5-flash').description('OpenRouter Model 1'),
+    OPENROUTER_MODEL_2: Joi.string().default('google/gemini-2.5-flash').description('OpenRouter Model 2'),
+    OPENROUTER_MODEL_3: Joi.string().default('google/gemini-2.5-flash').description('OpenRouter Model 3'),
+    OPENROUTER_MAX_TOKENS: Joi.number().integer().default(4096).description('OpenRouter Max Tokens'),
     CORS_ORIGIN: Joi.string().optional().allow('').description('Comma-separated allowed origins for CORS'),
   })
   .unknown();
@@ -104,12 +100,15 @@ const config = {
     return origins;
   })(),
   ai: {
-    provider: envVars.AI_PROVIDER,
-    gemini: {
-      apiKey: envVars.GEMINI_API_KEY,
-    },
-    groq: {
-      apiKey: envVars.GROQ_API_KEY,
+    provider: 'openrouter',
+    openrouter: {
+      apiKey1: envVars.OPENROUTER_API_KEY_1,
+      apiKey2: envVars.OPENROUTER_API_KEY_2,
+      apiKey3: envVars.OPENROUTER_API_KEY_3,
+      model1: envVars.OPENROUTER_MODEL_1,
+      model2: envVars.OPENROUTER_MODEL_2,
+      model3: envVars.OPENROUTER_MODEL_3,
+      maxTokens: envVars.OPENROUTER_MAX_TOKENS,
     },
   },
 };

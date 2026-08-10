@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
 import Joi from 'joi';
-
+import mongoose from 'mongoose';
 import { redis } from '../config/redis.js';
 import config from '../config/env.js';
 import logger from '../utilities/logger.js';
@@ -533,6 +533,7 @@ ${parsedText}`;
   const rawScenes = await generateJSON(
     prompt,
     schemaHint,
+    STAGES.SCENES
   );
 
   const normalizedScenes =
@@ -550,7 +551,7 @@ ${parsedText}`;
           .allow('')
           .default(''),
         sceneText: Joi.string().required(),
-      }).unknown(false),
+      }).unknown(true),
     )
     .required();
 
@@ -764,6 +765,7 @@ ${parsedText}`;
   const rawCharacters = await generateJSON(
     prompt,
     schemaHint,
+    STAGES.CHARACTERS
   );
 
   const normalizedCharacters =
@@ -792,7 +794,7 @@ ${parsedText}`;
         arcSummary: Joi.string()
           .allow('')
           .default(''),
-      }),
+      }).unknown(true),
     )
     .required();
 
@@ -993,7 +995,10 @@ For each pair of characters that interact in the story, return:
 - characterBName: exact name of character B from the Characters list
 - type: one of "romantic", "family", "rival", "mentor", "ally", or "other"
 - sentimentScore: number from -1.0 to 1.0
-- interactions: array containing the scenes where they interact
+- interactions: array of objects representing their interactions in specific scenes. Each object must contain:
+  * sceneId: The exact ID string (e.g. "60c72b2f9b1d8a25c8d01b52") of the scene from the Scenes list below
+  * sentimentScore: sentiment score of their interaction in this scene (number from -1.0 to 1.0)
+  * justification: brief explanation of their interaction in this scene
 
 IMPORTANT:
 - Return ONLY a valid JSON array.
@@ -1053,6 +1058,7 @@ ${scenes
             properties: {
               sceneId: {
                 type: 'STRING',
+                description: 'The exact ID of the scene from the Scenes list (e.g. "60c72b2f9b1d8a25c8d01b52")',
               },
               sentimentScore: {
                 type: 'NUMBER',
@@ -1083,7 +1089,45 @@ ${scenes
     await generateJSON(
       prompt,
       schemaHint,
+      STAGES.RELATIONSHIPS
     );
+
+  // Setup robust scene resolution mapping
+  const sceneResolverMap = new Map();
+  for (const scene of scenes) {
+    const sId = scene._id.toString();
+    sceneResolverMap.set(sId.toLowerCase(), scene._id);
+    sceneResolverMap.set(scene.sceneNumber.toString(), scene._id);
+    sceneResolverMap.set(`scene ${scene.sceneNumber}`, scene._id);
+    sceneResolverMap.set(scene.title.toLowerCase(), scene._id);
+  }
+
+  const resolveSceneId = (value) => {
+    if (!value) return null;
+    const valStr = String(value).trim().toLowerCase();
+    
+    if (sceneResolverMap.has(valStr)) {
+      return sceneResolverMap.get(valStr);
+    }
+    
+    const objIdMatch = valStr.match(/[0-9a-f]{24}/i);
+    if (objIdMatch && sceneResolverMap.has(objIdMatch[0])) {
+      return sceneResolverMap.get(objIdMatch[0]);
+    }
+    
+    const sceneNumMatch = valStr.match(/(?:scene|sc)\s*(?:number|no|:)?\s*(\d+)/i);
+    if (sceneNumMatch && sceneResolverMap.has(sceneNumMatch[1])) {
+      return sceneResolverMap.get(sceneNumMatch[1]);
+    }
+    
+    for (const scene of scenes) {
+      if (valStr.includes(scene.title.toLowerCase())) {
+        return scene._id;
+      }
+    }
+    
+    return null;
+  };
 
   const normalizedRelationships = normalizeArrayResponse(
     rawRelationships,
@@ -1149,26 +1193,34 @@ ${scenes
     let interactions = rel.interactions;
     if (Array.isArray(interactions)) {
       interactions = interactions.map((inter) => {
-        if (!inter || typeof inter !== 'object') {
+        if (typeof inter === 'string') {
+          const resolvedId = resolveSceneId(inter);
+          if (!resolvedId) return null;
           return {
-            sceneId: 'unknown',
-            sentimentScore: 0,
-            justification: '',
+            sceneId: resolvedId.toString(),
+            sentimentScore: typeof rel.sentimentScore === 'number' ? rel.sentimentScore : 0,
+            justification: inter,
           };
         }
+
+        if (!inter || typeof inter !== 'object') {
+          return null;
+        }
+
+        const resolvedId = resolveSceneId(inter.sceneId);
+        if (!resolvedId) return null;
+
         return {
-          ...inter,
-          sceneId: inter.sceneId || 'unknown',
+          sceneId: resolvedId.toString(),
           sentimentScore: typeof inter.sentimentScore === 'number' ? inter.sentimentScore : 0,
           justification: inter.justification || '',
         };
-      });
+      }).filter(Boolean);
     } else {
       interactions = [];
     }
 
     return {
-      ...rel,
       characterAName: characterAName || 'Unknown A',
       characterBName: characterBName || 'Unknown B',
       type,
@@ -1218,10 +1270,10 @@ ${scenes
                 Joi.string()
                   .allow('')
                   .default(''),
-            }),
+            }).unknown(true),
           )
           .default([]),
-      }),
+      }).unknown(true),
     )
     .required();
 
@@ -1279,7 +1331,7 @@ ${scenes
       );
 
       sceneIds.push(
-        interaction.sceneId,
+        new mongoose.Types.ObjectId(interaction.sceneId)
       );
     }
 
@@ -1419,6 +1471,7 @@ ${scenes
     await generateJSON(
       prompt,
       schemaHint,
+      STAGES.TIMELINE
     );
 
   const normalizedTimeline =
@@ -1441,7 +1494,7 @@ ${scenes
 
         isFlashback:
           Joi.boolean().default(false),
-      }),
+      }).unknown(true),
     )
     .required();
 
@@ -1669,7 +1722,7 @@ const runArc = async ({ documentId }) => {
       return {
         sceneId: scene._id,
         tensionScore,
-        label: scene.title,
+        label: scene.summary || scene.title,
       };
     },
   );
@@ -1915,9 +1968,20 @@ ${scenes
       type = 'attribute-conflict';
     }
 
+    let severity = issue.severity;
+    if (typeof severity === 'string') {
+      severity = severity.toLowerCase().trim();
+      const validSeverities = ['low', 'medium', 'high'];
+      if (!validSeverities.includes(severity)) {
+        severity = 'medium';
+      }
+    }
+
     return {
-      ...issue,
       type,
+      description: issue.description || '',
+      sceneIds: Array.isArray(issue.sceneIds) ? issue.sceneIds : [],
+      severity: severity || 'medium',
     };
   });
 
@@ -1946,7 +2010,7 @@ ${scenes
             'high',
           )
           .default('medium'),
-      }),
+      }).unknown(true),
     )
     .required();
 

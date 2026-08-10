@@ -59,8 +59,8 @@ export default function StoryArcTab({ documentId }) {
       
       const point = {
         name: `Scene ${sceneNum}`,
-        tension: pt.tensionScore || 0,
-        label: pt.label || scene?.title || `Scene ${sceneNum}`,
+        tension: (pt.tensionScore || 0) / 100,
+        label: scene ? scene.summary : (pt.label || scene?.title || `Scene ${sceneNum}`),
         sceneId: pt.sceneId
       };
 
@@ -183,10 +183,11 @@ export default function StoryArcTab({ documentId }) {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 shadow-lg text-xs space-y-1 text-left">
-                        <p className="font-bold font-mono">{data.name}</p>
-                        <p className="font-serif italic">"{data.label}"</p>
-                        <p className="font-semibold text-purple-400">Tension: {Math.round(data.tension * 100)}%</p>
+                      <div className="bg-slate-900 text-white p-3.5 rounded-xl border border-slate-800 shadow-lg text-xs space-y-1 text-left max-w-sm">
+                        <p className="font-bold font-mono text-purple-400">{data.name}</p>
+                        <p className="font-semibold text-slate-300">Major Development:</p>
+                        <p className="font-serif italic text-slate-100">"{data.label}"</p>
+                        <p className="font-semibold text-purple-300 mt-1">Tension Level: {Math.round(data.tension * 100)}%</p>
                       </div>
                     );
                   }

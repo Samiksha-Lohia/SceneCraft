@@ -251,6 +251,16 @@ export const api = {
       const res = await fetch(url, { headers: getHeaders() });
       const data = await handleResponse(res);
       return data.data;
+    },
+
+    async ask(documentId, question) {
+      const res = await fetch(`${API_BASE}/documents/${documentId}/search/ask`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ question }),
+      });
+      const data = await handleResponse(res);
+      return data.data;
     }
   }
 };

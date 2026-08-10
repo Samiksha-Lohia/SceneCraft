@@ -37,7 +37,8 @@ router.get('/', async (req, res, next) => {
  * POST /api/documents
  * Uploads a new story document. Expects multipart/form-data with field "file".
  */
-router.post('/', uploadSingle, async (req, res, next) => {
+router.post('/',
+   uploadSingle, async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });

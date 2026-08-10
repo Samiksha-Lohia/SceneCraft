@@ -71,16 +71,24 @@ const generateTokenPair = async (user) => {
  * @returns {{ user: UserDto, tokens: { accessToken, refreshToken } }}
  */
 const register = async (name, email, password) => {
-  const existing = await userRepository.findByEmail(email);
+  const normalizedEmail = email ? email.toString().toLowerCase().trim() : '';
+  const existing = await userRepository.findByEmail(normalizedEmail);
   if (existing) {
     throw new ConflictError('An account with this email already exists.');
   }
 
-  // The User model pre-save hook hashes the passwordHash field automatically.
-  const user = await userRepository.create({ name, email, passwordHash: password });
+  try {
+    // The User model pre-save hook hashes the passwordHash field automatically.
+    const user = await userRepository.create({ name, email: normalizedEmail, passwordHash: password });
 
-  const tokens = await generateTokenPair(user);
-  return { user: UserDto.toResponse(user), tokens };
+    const tokens = await generateTokenPair(user);
+    return { user: UserDto.toResponse(user), tokens };
+  } catch (err) {
+    if (err.code === 11000) {
+      throw new ConflictError('An account with this email already exists.');
+    }
+    throw err;
+  }
 };
 
 /**
@@ -88,7 +96,8 @@ const register = async (name, email, password) => {
  * @returns {{ user: UserDto, tokens: { accessToken, refreshToken } }}
  */
 const login = async (email, password) => {
-  const user = await userRepository.findByEmail(email);
+  const normalizedEmail = email ? email.toString().toLowerCase().trim() : '';
+  const user = await userRepository.findByEmail(normalizedEmail);
   if (!user) {
     throw new UnauthorizedError('Invalid email or password.');
   }
