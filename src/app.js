@@ -45,6 +45,10 @@ const createApp = () => {
     store: new RedisStore({
       sendCommand: (...args) => redis.call(...args),
     }),
+    skip: (req) => {
+      // Bypass global rate limit for document jobs status checking GET endpoint
+      return req.method === 'GET' && req.originalUrl && /\/api\/documents\/[^/]+\/jobs(\?|$)/.test(req.originalUrl);
+    },
     message: { success: false, message: 'Too many requests, please try again later.' },
   });
   app.use('/api', limiter);

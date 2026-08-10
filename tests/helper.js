@@ -29,10 +29,7 @@ export const setupTestDB = (before, after, afterEach) => {
         await collections[key].deleteMany({});
       }
     }
-    // Clear redis keys matching tests
-    const keys = await redis.keys('refresh_token:*');
-    if (keys.length) {
-      await redis.del(...keys);
-    }
+    // Clear all Redis keys to reset rate limiters and refresh tokens
+    await redis.flushdb();
   });
 };

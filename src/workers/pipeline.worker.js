@@ -1085,10 +1085,97 @@ ${scenes
       schemaHint,
     );
 
-  const normalizedRelationships =
-    normalizeArrayResponse(
-      rawRelationships,
-    );
+  const normalizedRelationships = normalizeArrayResponse(
+    rawRelationships,
+  ).map((rel) => {
+    if (typeof rel === 'string') {
+      let characterAName = 'Unknown A';
+      let characterBName = 'Unknown B';
+      let type = 'other';
+      const parts = rel.split(/:| - | is /);
+      if (parts.length >= 2) {
+        type = parts[parts.length - 1].trim().toLowerCase();
+        const namesPart = parts[0];
+        const names = namesPart.split(/ and | to | with /i);
+        if (names.length >= 2) {
+          characterAName = names[0].trim();
+          characterBName = names[1].trim();
+        }
+      }
+      return {
+        characterAName,
+        characterBName,
+        type,
+        sentimentScore: 0,
+        interactions: [],
+      };
+    }
+
+    if (!rel || typeof rel !== 'object') {
+      return {
+        characterAName: 'Unknown A',
+        characterBName: 'Unknown B',
+        type: 'other',
+        sentimentScore: 0,
+        interactions: [],
+      };
+    }
+
+    const characterAName =
+      rel.characterAName ||
+      rel.characterA ||
+      rel.charA ||
+      rel.nameA ||
+      rel.character_a ||
+      rel.characterNameA;
+
+    const characterBName =
+      rel.characterBName ||
+      rel.characterB ||
+      rel.charB ||
+      rel.nameB ||
+      rel.character_b ||
+      rel.characterNameB;
+
+    let type = rel.type || 'other';
+    if (typeof type === 'string') {
+      type = type.toLowerCase().trim();
+      const validTypes = ['romantic', 'family', 'rival', 'mentor', 'ally', 'other'];
+      if (!validTypes.includes(type)) {
+        type = 'other';
+      }
+    }
+
+    let interactions = rel.interactions;
+    if (Array.isArray(interactions)) {
+      interactions = interactions.map((inter) => {
+        if (!inter || typeof inter !== 'object') {
+          return {
+            sceneId: 'unknown',
+            sentimentScore: 0,
+            justification: '',
+          };
+        }
+        return {
+          ...inter,
+          sceneId: inter.sceneId || 'unknown',
+          sentimentScore: typeof inter.sentimentScore === 'number' ? inter.sentimentScore : 0,
+          justification: inter.justification || '',
+        };
+      });
+    } else {
+      interactions = [];
+    }
+
+    return {
+      ...rel,
+      characterAName: characterAName || 'Unknown A',
+      characterBName: characterBName || 'Unknown B',
+      type,
+      sentimentScore: typeof rel.sentimentScore === 'number' ? rel.sentimentScore : 0,
+      interactions,
+    };
+  });
 
   const relationshipJoi = Joi.array()
     .items(
@@ -1794,10 +1881,45 @@ ${scenes
       schemaHint,
     );
 
-  const normalizedIssues =
-    normalizeArrayResponse(
-      rawIssues,
-    );
+  const normalizedIssues = normalizeArrayResponse(
+    rawIssues,
+  ).map((issue) => {
+    if (!issue || typeof issue !== 'object') return issue;
+
+    let type =
+      issue.type ||
+      issue.issueType ||
+      issue.conflictType ||
+      issue.category;
+
+    if (typeof type === 'string') {
+      type = type.toLowerCase().trim().replace('_', '-');
+      if (type === 'attribute' || type === 'attributeconflict') {
+        type = 'attribute-conflict';
+      }
+      if (type === 'timeline' || type === 'timelineconflict') {
+        type = 'timeline-conflict';
+      }
+      if (type === 'gap' || type === 'unexplainedgap') {
+        type = 'unexplained-gap';
+      }
+    }
+
+    const validTypes = [
+      'attribute-conflict',
+      'timeline-conflict',
+      'unexplained-gap',
+    ];
+
+    if (!type || !validTypes.includes(type)) {
+      type = 'attribute-conflict';
+    }
+
+    return {
+      ...issue,
+      type,
+    };
+  });
 
   const continuityJoi = Joi.array()
     .items(

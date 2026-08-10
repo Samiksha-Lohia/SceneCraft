@@ -138,9 +138,10 @@ export const api = {
 
   // Pipeline/Jobs
   jobs: {
-    async getStatus(documentId) {
+    async getStatus(documentId, signal) {
       const res = await fetch(`${API_BASE}/documents/${documentId}/jobs`, {
         headers: getHeaders(),
+        signal,
       });
       const data = await handleResponse(res);
       return data.data;

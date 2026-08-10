@@ -28,47 +28,59 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
   // Poll for document processing status
   useEffect(() => {
     let uploadStarted = false;
+    const abortController = new AbortController();
 
     const startProcessing = async () => {
       try {
         let docId = activeDocId;
         
         // If file is provided, upload it first
-        if (file && !docId) {
+        if (file && (!docId || docId === 'null' || docId === 'undefined')) {
           setCurrentStageText('Uploading manuscript...');
           const uploadRes = await api.documents.upload(file);
           docId = uploadRes.id || uploadRes._id;
           setActiveDocId(docId);
         }
 
-        if (!docId) {
+        if (!docId || docId === 'null' || docId === 'undefined') {
           throw new Error('No document ID or file provided.');
         }
 
         // Start polling jobs
         uploadStarted = true;
+
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+
         pollIntervalRef.current = setInterval(() => {
-          checkStatus(docId);
-        }, 2000);
+          checkStatus(docId, abortController.signal);
+        }, 3000);
 
         // Run initial check
-        checkStatus(docId);
+        checkStatus(docId, abortController.signal);
       } catch (err) {
-        setErrorMsg(err.message || 'Failed to upload document.');
-        setLoading(false);
+        if (err.name !== 'AbortError') {
+          setErrorMsg(err.message || 'Failed to upload document.');
+          setLoading(false);
+        }
       }
     };
 
     startProcessing();
 
     return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      abortController.abort();
     };
   }, [activeDocId, file]);
 
-  const checkStatus = async (docId) => {
+  const checkStatus = async (docId, signal) => {
     try {
-      const jobList = await api.jobs.getStatus(docId);
+      const jobList = await api.jobs.getStatus(docId, signal);
       setJobs(jobList || []);
 
       // Calculate progress and determine current stage
@@ -136,7 +148,9 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
         }
       }
     } catch (err) {
-      console.error('Error fetching jobs:', err);
+      if (err.name !== 'AbortError') {
+        console.error('Error fetching jobs:', err);
+      }
     }
   };
 

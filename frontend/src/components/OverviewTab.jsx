@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api';
 import { 
   BookOpen, 
@@ -22,11 +22,35 @@ export default function OverviewTab({ documentId }) {
     dominantMood: 'Analyzing...'
   });
   const [loading, setLoading] = useState(true);
+  const pollIntervalRef = useRef(null);
 
   useEffect(() => {
+    if (!documentId || documentId === 'null' || documentId === 'undefined') {
+      setLoading(false);
+      return;
+    }
+    const abortController = new AbortController();
+
     loadData();
-    const interval = setInterval(loadJobs, 3000);
-    return () => clearInterval(interval);
+
+    // Start polling jobs
+    loadJobs(abortController.signal);
+
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
+    pollIntervalRef.current = setInterval(() => {
+      loadJobs(abortController.signal);
+    }, 3000);
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      abortController.abort();
+    };
   }, [documentId]);
 
   const loadData = async () => {
@@ -63,8 +87,6 @@ export default function OverviewTab({ documentId }) {
         charactersCount: chars.length || 0,
         dominantMood: dominant
       });
-
-      await loadJobs();
     } catch (err) {
       console.error('Failed to load overview data:', err);
     } finally {
@@ -72,12 +94,27 @@ export default function OverviewTab({ documentId }) {
     }
   };
 
-  const loadJobs = async () => {
+  const loadJobs = async (signal) => {
     try {
-      const jobList = await api.jobs.getStatus(documentId);
+      const jobList = await api.jobs.getStatus(documentId, signal);
       setJobs(jobList || []);
+
+      // Check if there are any active/running/queued jobs
+      const hasActiveJobs = (jobList || []).some(
+        (job) => job.status === 'running' || job.status === 'queued'
+      );
+
+      // If no active jobs, stop polling
+      if (!hasActiveJobs && jobList && jobList.length > 0) {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+      }
     } catch (err) {
-      console.error('Failed to load pipeline jobs:', err);
+      if (err.name !== 'AbortError') {
+        console.error('Failed to load pipeline jobs:', err);
+      }
     }
   };
 
