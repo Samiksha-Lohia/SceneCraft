@@ -1,5 +1,15 @@
 // SceneCraft Frontend API Service
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const getApiBase = () => {
+  let base = import.meta.env.VITE_API_URL || '/api';
+  if (base.startsWith('http')) {
+    base = base.replace(/\/$/, '');
+    if (!base.endsWith('/api')) {
+      base += '/api';
+    }
+  }
+  return base;
+};
+const API_BASE = getApiBase();
 
 // Helper to get headers with authentication token
 const getHeaders = (isMultipart = false) => {
