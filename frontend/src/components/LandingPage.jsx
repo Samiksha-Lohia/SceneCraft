@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import AuthModal from './AuthModal';
+import lostInABookImg from '../assets/Lost_in_a_Book-removebg-preview.png';
+import doodle1 from '../assets/00371261227346a59bdb24adc0932063-removebg-preview.png';
+import doodle2 from '../assets/146e1e1cb5b63457348ee9e19be589c6-removebg-preview.png';
+import doodle3 from '../assets/9d261ec3344c8925537fae690a9c8c4b-removebg-preview.png';
+import doodle4 from '../assets/d0f01b872f5c3ada81d7b52897de0387-removebg-preview.png';
+import doodle5 from '../assets/download__1_-removebg-preview.png';
 import { 
   Sparkles, 
   Upload, 
@@ -8,6 +14,7 @@ import {
   Book,
   LogOut, 
   FileText,
+  PenLine,
   Trash2,
   X
 } from 'lucide-react';
@@ -102,10 +109,127 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
   return (
     <div className="min-h-screen notebook-grid flex flex-col relative overflow-x-hidden">
       
+      {/* Background Random Doodles */}
+<div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
+
+  {/* Flower — top left */}
+  <img
+    src={doodle1}
+    alt=""
+    className="absolute top-[12%] left-[5%] w-[62px] h-[62px] object-contain rotate-[12deg] opacity-20"
+  />
+
+  {/* Star — left middle */}
+  <img
+    src={doodle4}
+    alt=""
+    className="absolute top-[31%] left-[2%] w-[72px] h-[72px] object-contain rotate-[-15deg] opacity-20"
+  />
+
+  {/* Star — bottom left */}
+  <img
+    src={doodle4}
+    alt=""
+    className="absolute bottom-[25%] left-[4%] w-[56px] h-[56px] object-contain rotate-[8deg] opacity-20"
+  />
+
+  {/* Notebook — bottom left */}
+  <img
+    src={doodle5}
+    alt=""
+    className="absolute bottom-[4%] left-[9%] w-[90px] h-[90px] object-contain rotate-[-12deg] opacity-20"
+  />
+
+  {/* Camera — upper center-left */}
+  <img
+    src={doodle2}
+    alt=""
+    className="absolute top-[10%] left-[29%] w-[100px] h-[100px] object-contain rotate-[-8deg] opacity-20"
+  />
+
+  {/* Star — upper center */}
+  <img
+    src={doodle4}
+    alt=""
+    className="absolute top-[7%] left-[47%] w-[76px] h-[76px] object-contain rotate-[10deg] opacity-20"
+  />
+
+  {/* Notebook — upper center-right */}
+  <img
+    src={doodle5}
+    alt=""
+    className="absolute top-[5%] left-[59%] w-[72px] h-[72px] object-contain rotate-[-20deg] opacity-20"
+  />
+
+  {/* Notebook — upper right */}
+  <img
+    src={doodle5}
+    alt=""
+    className="absolute top-[11%] right-[3%] w-[95px] h-[95px] object-contain rotate-[12deg] opacity-20"
+  />
+
+  {/* Flower — center */}
+  <img
+    src={doodle1}
+    alt=""
+    className="absolute top-[29%] left-[57%] w-[78px] h-[78px] object-contain rotate-[5deg] opacity-20"
+  />
+
+  {/* Camera — right middle */}
+  <img
+    src={doodle2}
+    alt=""
+    className="absolute top-[35%] right-[10%] w-[95px] h-[95px] object-contain rotate-[-12deg] opacity-20"
+  />
+
+  {/* Star — right middle */}
+  <img
+    src={doodle4}
+    alt=""
+    className="absolute top-[52%] right-[3%] w-[70px] h-[70px] object-contain rotate-[8deg] opacity-20"
+  />
+
+  {/* Notebook — center bottom */}
+  <img
+    src={doodle5}
+    alt=""
+    className="absolute bottom-[22%] left-[41%] w-[76px] h-[76px] object-contain rotate-[-8deg] opacity-20"
+  />
+
+  {/* Camera — bottom center */}
+  <img
+    src={doodle2}
+    alt=""
+    className="absolute bottom-[5%] left-[51%] w-[90px] h-[90px] object-contain rotate-[-10deg] opacity-20"
+  />
+
+  {/* Flower — bottom right */}
+  <img
+    src={doodle1}
+    alt=""
+    className="absolute bottom-[8%] right-[17%] w-[78px] h-[78px] object-contain rotate-[8deg] opacity-20"
+  />
+
+  {/* Notebook — bottom right */}
+  <img
+    src={doodle5}
+    alt=""
+    className="absolute bottom-[7%] right-[4%] w-[82px] h-[82px] object-contain rotate-[15deg] opacity-20"
+  />
+
+  {/* Small star — near illustration */}
+  <img
+    src={doodle4}
+    alt=""
+    className="absolute top-[21%] left-[75%] w-[62px] h-[62px] object-contain rotate-[15deg] opacity-20"
+  />
+
+</div>
+      
       {/* Header */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-30">
         <div className="flex items-center gap-2 cursor-pointer">
-          <BookOpen className="w-6 h-6 text-slate-900" />
+          <PenLine className="w-6 h-6 text-slate-900" />
           <span className="font-serif font-bold text-xl tracking-tight text-slate-900">SceneCraft</span>
         </div>
 
@@ -179,7 +303,7 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
           ) : (
             <button
               onClick={handleTryDemo}
-              className="px-5 py-2.5 bg-slate-950 hover:bg-slate-900 text-white rounded-full text-sm font-semibold shadow-xs hover:scale-105 active:scale-95 transition-all"
+              className="px-5 py-2.5 bg-purple-200 hover:bg-purple-300 text-slate-900 border border-slate-900 rounded-full text-sm font-semibold shadow-[2px_2px_0px_#0f172a] hover:shadow-[3px_3px_0px_#0f172a] hover:scale-105 active:scale-95 transition-all"
             >
               Try the demo
             </button>
@@ -198,7 +322,7 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
             Understand your story<br />
             <span className="relative inline-block mt-2">
               like never before.
-              <span className="absolute bottom-1 left-0 right-0 h-3 bg-purple-100/70 -z-10 rounded-sm"></span>
+              <span className="absolute bottom-1 left-0 right-0 h-3 bg-purple-200/70 -z-10 "></span>
             </span>
           </h1>
 
@@ -218,14 +342,14 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
             />
             <button
               onClick={triggerFilePicker}
-              className="px-6 py-3.5 bg-slate-950 hover:bg-slate-900 text-white rounded-full text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+              className="px-6 py-3.5 bg-purple-200 hover:bg-purple-300 text-slate-900 border border-slate-900 rounded-full text-sm font-semibold shadow-[2px_2px_0px_#0f172a] hover:shadow-[3px_3px_0px_#0f172a] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
               Upload your story
             </button>
             <button
               onClick={() => setIsFlowchartOpen(true)}
-              className="px-6 py-3.5 bg-white border border-slate-200 hover:border-slate-400 text-slate-800 rounded-full text-sm font-semibold hover:bg-slate-50 transition-colors"
+              className="px-6 py-3.5 bg-white border border-slate-900 text-slate-800 rounded-full text-sm font-semibold shadow-[2px_2px_0px_#0f172a] hover:bg-slate-50 hover:shadow-[3px_3px_0px_#0f172a] hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               See how it works
             </button>
@@ -242,128 +366,13 @@ export default function LandingPage({ onSelectDocument, onStartUpload }) {
           
           {/* Sketch Drawing */}
           <div className="relative w-full max-w-md aspect-[1.1] select-none">
-            {/* Sparkles background */}
-            <div className="absolute -top-6 -right-6 text-yellow-500/40 animate-pulse">
-              <Sparkles className="w-8 h-8" />
-            </div>
-            <div className="absolute -bottom-6 -left-6 text-purple-500/20">
-              <Sparkles className="w-12 h-12" />
-            </div>
 
-            {/* Custom SVG Notebook Illustration */}
-            <svg 
-              viewBox="0 0 500 450" 
-              className="w-full h-full drop-shadow-xl filter"
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Back Page Shadow & Border */}
-              <path d="M40 380 C 120 375, 220 375, 250 395 C 280 375, 380 375, 460 380 L 450 60 C 370 55, 280 55, 250 75 C 220 55, 130 55, 50 60 Z" fill="#fafafa" stroke="#e2e8f0" strokeWidth="4" />
-              
-              {/* Book Sheets Shadow */}
-              <path d="M43 383 C 121 378, 220 378, 250 398 C 280 378, 379 378, 457 383 L 447 63 C 369 58, 280 58, 250 78 C 220 58, 131 58, 53 63 Z" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
-              
-              {/* Main Open Pages */}
-              <path id="open-notebook" d="M45 385 C 122 380, 220 380, 250 400 C 280 380, 378 380, 455 385 L 445 65 C 368 60, 280 60, 250 80 C 220 60, 132 60, 55 65 Z" fill="#ffffff" stroke="#1e293b" strokeWidth="3" />
-
-              {/* Binding Center line */}
-              <path d="M250 80 L 250 400" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" />
-              <path d="M250 76 C 250 76, 252 410, 254 415" stroke="#475569" strokeWidth="1.5" />
-              
-              {/* Left Page content (Text / Quill) */}
-              {/* Lines */}
-              <path d="M85 130 H 220" stroke="#e2e8f0" strokeWidth="2" />
-              <path d="M85 160 H 220" stroke="#e2e8f0" strokeWidth="2" />
-              <path d="M85 190 H 220" stroke="#e2e8f0" strokeWidth="2" />
-              <path d="M85 220 H 220" stroke="#e2e8f0" strokeWidth="2" />
-              <path d="M85 250 H 220" stroke="#e2e8f0" strokeWidth="2" />
-              <path d="M85 280 H 200" stroke="#e2e8f0" strokeWidth="2" />
-              <path d="M85 310 H 180" stroke="#e2e8f0" strokeWidth="2" />
-
-              {/* Hand Drawn Sketched Text effect */}
-              <path d="M90 125 C 100 120, 120 135, 135 125 C 150 115, 170 135, 190 125" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M90 155 C 110 150, 130 162, 150 155 C 170 148, 195 160, 210 155" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M90 185 C 105 180, 120 190, 145 185 C 165 180, 180 192, 205 185" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M90 215 C 100 210, 115 222, 130 215 C 145 208, 160 220, 185 215" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
-
-              {/* Heart icon on top left page */}
-              <path d="M100 95 C 95 85, 80 85, 80 95 C 80 105, 100 115, 100 115 C 100 115, 120 105, 120 95 C 120 85, 105 85, 100 95 Z" fill="none" stroke="#1e293b" strokeWidth="2" />
-
-              {/* Right Page content (Character Network Graph) */}
-              {/* Dotted Connections */}
-              <path d="M300 130 L 370 110" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M370 110 L 410 160" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M410 160 L 370 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M370 230 L 300 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M300 230 L 300 130" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              
-              {/* Central Character Node */}
-              <path d="M350 170 L 300 130" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M350 170 L 370 110" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M350 170 L 410 160" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M350 170 L 370 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M350 170 L 300 230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-              <path d="M350 170 L 350 280" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" />
-
-              {/* Node Circles */}
-              {/* Protagonist (Center) */}
-              <circle cx="350" cy="170" r="16" fill="#fef08a" stroke="#1e293b" strokeWidth="2" />
-              {/* Profile icon details */}
-              <circle cx="350" cy="166" r="5" fill="none" stroke="#1e293b" strokeWidth="1.5" />
-              <path d="M342 178 C 342 173, 358 173, 358 178" fill="none" stroke="#1e293b" strokeWidth="1.5" />
-              {/* Tiny heart badge on protagonist */}
-              <path d="M358 162 C 357 160, 354 160, 354 162 C 354 164, 358 166, 358 166 C 358 166, 362 164, 362 162 C 362 160, 359 160, 358 162 Z" fill="#ef4444" />
-
-              {/* Node 1 */}
-              <circle cx="300" cy="130" r="12" fill="#fff" stroke="#1e293b" strokeWidth="2" />
-              <circle cx="300" cy="127" r="4" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-              <path d="M294 136 C 294 132, 306 132, 306 136" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-
-              {/* Node 2 */}
-              <circle cx="370" cy="110" r="12" fill="#fff" stroke="#1e293b" strokeWidth="2" />
-              <circle cx="370" cy="107" r="4" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-              <path d="M364 116 C 364 112, 376 112, 376 116" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-
-              {/* Node 3 */}
-              <circle cx="410" cy="160" r="12" fill="#fff" stroke="#1e293b" strokeWidth="2" />
-              <circle cx="410" cy="157" r="4" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-              <path d="M404 166 C 404 162, 416 162, 416 166" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-
-              {/* Node 4 */}
-              <circle cx="370" cy="230" r="12" fill="#fff" stroke="#1e293b" strokeWidth="2" />
-              <circle cx="370" cy="227" r="4" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-              <path d="M364 236 C 364 232, 376 232, 376 236" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-
-              {/* Node 5 */}
-              <circle cx="300" cy="230" r="12" fill="#fff" stroke="#1e293b" strokeWidth="2" />
-              <circle cx="300" cy="227" r="4" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-              <path d="M294 236 C 294 232, 306 232, 306 236" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-
-              {/* Node 6 (Supporting) */}
-              <circle cx="350" cy="280" r="10" fill="#fff" stroke="#1e293b" strokeWidth="2" />
-              <circle cx="350" cy="277" r="3" fill="none" stroke="#1e293b" strokeWidth="1" />
-              <path d="M345 284 C 345 281, 355 281, 355 284" fill="none" stroke="#1e293b" strokeWidth="1" />
-
-              {/* Sparkle symbols around book */}
-              <path d="M400 65 L 403 72 L 410 75 L 403 78 L 400 85 L 397 78 L 390 75 L 397 72 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
-              <path d="M120 380 L 122 384 L 126 385 L 122 386 L 120 390 L 118 386 L 114 385 L 118 384 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
-              <path d="M280 50 L 282 54 L 286 55 L 282 56 L 280 60 L 278 56 L 274 55 L 278 54 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
-
-              {/* Pen Sketch Lying Across page bottom right */}
-              <g transform="translate(390, 240) rotate(50)">
-                {/* Pen body */}
-                <rect x="0" y="0" width="12" height="120" rx="3" fill="#0f172a" stroke="#fff" strokeWidth="1.5" />
-                {/* Pen clip */}
-                <rect x="3" y="15" width="2" height="35" fill="#f8fafc" />
-                {/* Pen Tip gold */}
-                <path d="M0 120 L 6 135 L 12 120 Z" fill="#fbbf24" stroke="#fff" strokeWidth="1" />
-                {/* Fine nib */}
-                <line x1="6" y1="135" x2="6" y2="128" stroke="#000" strokeWidth="2" />
-              </g>
-              
-              {/* Bookmark Ribbon */}
-              <path d="M246 397 L 246 430 L 252 422 L 258 430 L 258 397 Z" fill="#475569" stroke="#1e293b" strokeWidth="1.5" />
-            </svg>
+            {/* Illustration Image */}
+            <img 
+                src={lostInABookImg} 
+                alt="Lost in a Book" 
+                className="absolute w-full h-full object-contain drop-shadow-2xl bottom-[17%] left-[-10%] scale-170 transition-transform duration-500 ease-out" 
+              />
           </div>
         </div>
       </main>

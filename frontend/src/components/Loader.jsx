@@ -14,13 +14,18 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
 
 
   // Books representation for the left-side animation
-  // Reference stack (from bottom to top): RELATIONSHIPS, TIMELINE, SCENES, SCENES, CHARACTERS
+  // Reference stack (from bottom to top matching pipeline sequence)
   const initialBooks = [
-    { id: 'relationships', label: 'RELATIONSHIPS', color: 'bg-[#faf0e6] border-[#d2b48c] text-amber-900', stage: 'relationships' },
-    { id: 'timeline', label: 'TIMELINE', color: 'bg-[#f4ebe1] border-[#c1a084] text-amber-800', stage: 'timeline' },
-    { id: 'scenes_2', label: 'SCENES', color: 'bg-[#e6e6fa] border-[#b0b0e6] text-purple-900', stage: 'scenes' },
-    { id: 'scenes_1', label: 'SCENES', color: 'bg-[#fffacd] border-[#e6d08a] text-yellow-900', stage: 'scenes' },
-    { id: 'characters', label: 'CHARACTERS', color: 'bg-[#ffe4e1] border-[#f4b4b4] text-rose-900', stage: 'characters' },
+    { id: 'embeddings', label: 'EMBEDDINGS', color: 'bg-indigo-50 border-slate-900 text-indigo-900', stage: 'embeddings' },
+    { id: 'continuity', label: 'CONTINUITY', color: 'bg-teal-50 border-slate-900 text-teal-900', stage: 'continuity' },
+    { id: 'arc', label: 'STORY ARC', color: 'bg-rose-50 border-slate-900 text-rose-900', stage: 'arc' },
+    { id: 'mood', label: 'MOOD & TENSION', color: 'bg-orange-50 border-slate-900 text-orange-900', stage: 'mood' },
+    { id: 'dialogue', label: 'DIALOGUE', color: 'bg-sky-50 border-slate-900 text-sky-900', stage: 'dialogue' },
+    { id: 'timeline', label: 'TIMELINE', color: 'bg-amber-50 border-slate-900 text-amber-900', stage: 'timeline' },
+    { id: 'relationships', label: 'RELATIONSHIPS', color: 'bg-red-50 border-slate-900 text-red-900', stage: 'relationships' },
+    { id: 'characters', label: 'CHARACTERS', color: 'bg-emerald-50 border-slate-900 text-emerald-900', stage: 'characters' },
+    { id: 'scenes', label: 'SCENES', color: 'bg-purple-50 border-slate-900 text-purple-900', stage: 'scenes' },
+    { id: 'parsing', label: 'PARSING TEXT', color: 'bg-stone-100 border-slate-900 text-stone-900', stage: 'parsing' },
   ];
 
   const [activeBookIndex, setActiveBookIndex] = useState(0);
@@ -113,14 +118,8 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
       const progressPercent = Math.round((completedCount / totalStages) * 100);
       setOverallProgress(progressPercent);
 
-      // Determine active book animation stage based on which backend jobs are done
-      // index maps: 0=start, 1=scenes, 2=scenes2, 3=characters, 4=timeline, 5=relationships
-      let bookStage = 0;
-      if (jobList.find(j => j.stage === 'scenes' && j.status === 'completed')) bookStage = 2;
-      if (jobList.find(j => j.stage === 'characters' && j.status === 'completed')) bookStage = 3;
-      if (jobList.find(j => j.stage === 'timeline' && j.status === 'completed')) bookStage = 4;
-      if (jobList.find(j => j.stage === 'relationships' && j.status === 'completed')) bookStage = 5;
-      setActiveBookIndex(bookStage);
+      // Set the active book index to the number of completed jobs to trigger the landing puff particles
+      setActiveBookIndex(completedCount);
 
       if (failedStage) {
         setCurrentStageText(`Failed during ${stageLabels[failedStage.stage] || failedStage.stage}`);
@@ -171,36 +170,35 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
       <div className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden p-8 md:p-16 flex flex-col md:grid md:grid-cols-12 gap-12 items-center relative">
         
         {/* Left Side: Stacking Book Animation */}
-        <div className="md:col-span-6 w-full flex flex-col items-center justify-center min-h-[300px] relative">
+        <div className="md:col-span-6 w-full flex flex-col items-center justify-center min-h-[360px] relative">
           
           {/* Animated stack container */}
-          <div className="relative flex flex-col items-center justify-end w-64 h-64 border-b-4 border-slate-900 pb-2">
+          <div className="relative flex flex-col items-center justify-end w-64 h-[320px] border-b-4 border-slate-900 pb-2">
             
             <AnimatePresence>
               {initialBooks.map((book, idx) => {
                 // Determine if this book has fallen
-                // index maps: 0=no books, 1=1 book, 2=2 books, 3=3 books, 4=4 books, 5=5 books
-                const isFallen = activeBookIndex >= (5 - idx);
+                const isFallen = jobs.some(j => j.stage === book.stage && j.status === 'completed');
                 
                 if (!isFallen) return null;
 
                 return (
                   <motion.div
                     key={book.id}
-                    initial={{ y: -400, opacity: 0, rotation: idx % 2 === 0 ? 5 : -5 }}
+                    initial={{ y: -450, opacity: 0 }}
                     animate={{ 
                       y: 0, 
                       opacity: 1, 
-                      rotate: idx % 2 === 0 ? 0.8 : -0.8,
+                      rotate: idx % 2 === 0 ? 0.6 : -0.6,
                       scaleY: [1, 0.85, 1], // Squash effect on impact
                     }}
                     transition={{ 
                       type: 'spring', 
                       stiffness: 120, 
                       damping: 10,
-                      delay: 0.1 
+                      delay: 0.05 
                     }}
-                    className={`w-48 h-9 border-2 border-slate-900 rounded-md shadow-sm ${book.color} flex items-center justify-center font-bold text-xs tracking-wider mb-[-2px]`}
+                    className={`w-48 h-[26px] border-2 border-slate-900 rounded shadow-xs ${book.color} flex items-center justify-center font-bold text-[10px] tracking-wider mb-[-2px]`}
                   >
                     <span>{book.label}</span>
                   </motion.div>
@@ -209,7 +207,7 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
             </AnimatePresence>
 
             {/* Dust puff particles on book landing */}
-            {activeBookIndex > 0 && activeBookIndex <= 5 && (
+            {activeBookIndex > 0 && activeBookIndex <= 10 && (
               <motion.div 
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: [1, 1.5], opacity: [0.6, 0] }}
