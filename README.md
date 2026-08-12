@@ -40,7 +40,7 @@ Here is a preview of the SceneCraft interactive workspace:
 
 ---
 
-## 🚀 What Makes SceneCraft Different
+## What Makes SceneCraft Different
 
 These are the engineering highlights that separate SceneCraft from simple single-prompt wrapper projects:
 
