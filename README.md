@@ -1,6 +1,6 @@
 # SceneCraft — AI-Powered Interactive Story Analysis Platform
 
-> **Not just a summary.** SceneCraft is a job-oriented, multi-service platform that transforms any uploaded narrative manuscript (PDF, DOCX, or TXT) into a structured, fully explorable, interactive workspace with live WebSocket progress tracking and semantic search.
+> **Not just a summary.** SceneCraft is a multi-service platform built around a background job-queue pipeline, transforming any uploaded narrative manuscript (PDF, DOCX, or TXT) into a structured, fully explorable, interactive workspace with live WebSocket progress tracking and semantic search.
 
 [![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20React%20%7C%20MongoDB%20%7C%20Redis%20%7C%20Socket.io-orange?style=flat-square)](https://github.com)
 [![AI Orchestration](https://img.shields.io/badge/AI-OpenRouter-blue?style=flat-square)](https://github.com)
