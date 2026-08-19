@@ -3,7 +3,7 @@
 > **Not just a summary.** SceneCraft is a job-oriented, multi-service platform that transforms any uploaded narrative manuscript (PDF, DOCX, or TXT) into a structured, fully explorable, interactive workspace with live WebSocket progress tracking and semantic search.
 
 [![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20React%20%7C%20MongoDB%20%7C%20Redis%20%7C%20Socket.io-orange?style=flat-square)](https://github.com)
-[![AI Orchestration](https://img.shields.io/badge/AI-Gemini%20%2B%20Groq%20Whisper-blue?style=flat-square)](https://github.com)
+[![AI Orchestration](https://img.shields.io/badge/AI-OpenRouter-blue?style=flat-square)](https://github.com)
 [![Visualizations](https://img.shields.io/badge/UI-xyflow%20%2B%20Framer%20Motion%20%2B%20Recharts-green?style=flat-square)](https://github.com)
 
 ---
@@ -26,7 +26,7 @@
 
 ## 🌟 Overview
 
-SceneCraft converts raw creative drafts into rich, interactive metadata. Rather than relying on a flat, disposable chatbot response, SceneCraft utilizes a **9-stage dependency-aware AI analysis pipeline** powered by **Gemini API** and **Groq SDK** to parse structural, narrative, character, relationship, and emotional details.
+SceneCraft converts raw creative drafts into rich, interactive metadata. Instead of relying on a flat, disposable chatbot response, SceneCraft runs a **9-stage dependency-aware AI analysis pipeline** powered by **OpenRouter** to parse structural, narrative, character, relationship, and emotional details.
 
 All results are stored in a cross-referenced NoSQL database and served through a minimal, paper-inspired notebook interface featuring interactive relationship node graphs, chronologically-reordered timelines, narrative tension charts, and semantic query lookup.
 
@@ -52,7 +52,6 @@ These are the engineering highlights that separate SceneCraft from simple single
 | 🔍 **Semantic Story Memory** | Text embeddings generated and queried via vector representation for natural language queries |
 | 📈 **Tension & Pacing Mapping** | Custom algorithm analyzing conflict indicators and scene lengths, visualized using interactive Recharts curves |
 | 🕵️ **Continuity Auditor** | Multi-pass LLM scanner detecting plot holes, timeline inconsistencies, and character attribute mismatches |
-| 🎙️ **Voice-to-Text Integration** | Groq Whisper Large-v3 backend pipeline for voice-driven note-taking and navigation |
 | 📂 **Format-Flexible Parser** | Streamlined server-side parser extracting structural elements from `.docx`, `.pdf`, and `.txt` files |
 
 ---
@@ -126,16 +125,14 @@ graph TD
 
     subgraph StorageLayer["Persistence & Infrastructure"]
         DB[("MongoDB (Story Data Models)")]
-        S3["AWS S3 / S3-Compatible Object Store"]
-        Gemini["Gemini API (Analysis)"]
-        Groq["Groq API (Whisper Transcription)"]
+        OpenRouter["OpenRouter (LLM Analysis)"]
     end
 
     UI -->|HTTP Requests| API
     SocketClient <-->|Live Updates| API
     API --> Auth
     API --> Parser
-    Parser -->|Raw Text| S3
+    Parser -->|Raw Text| DB
     API -->|Initialize Pipeline| Manager
     Manager -->|Write State| RedisStore
     RedisStore --> ParseWorker
@@ -146,8 +143,7 @@ graph TD
     MoodWorker --> ArcWorker & ContWorker
     ContWorker & ArcWorker --> EmbedWorker
     
-    WorkersLayer -->|LLM Queries| Gemini
-    WorkersLayer -->|Audio Transcription| Groq
+    WorkersLayer -->|LLM Queries| OpenRouter
     WorkersLayer -->|Save Documents| DB
     WorkersLayer -->|Status Events| API
     API -->|WebSocket Events| SocketClient
@@ -163,10 +159,8 @@ graph TD
 - **MongoDB + Mongoose**: Primary document database.
 - **Redis (ioredis)**: State management for BullMQ queues and temporary rate-limit storage.
 - **BullMQ**: Dependency-aware background job processor.
-- **@google/generative-ai**: Underpinning LLM services (Gemini).
-- **groq-sdk**: High-performance audio transcription (Whisper Large-v3).
+- **OpenRouter API**: Unified LLM access powering the analysis pipeline.
 - **pdf-parse & mammoth**: Server-side raw text extractions from PDF and DOCX.
-- **AWS SDK (S3)**: File storage for original manuscripts.
 
 ### Frontend
 - **React 19 + Vite**: High-performance client framework.
@@ -184,7 +178,7 @@ graph TD
 SceneCraft/
 ├── backend/
 │   ├── src/
-│   │   ├── config/          # Redis, MongoDB, AWS S3, and AI Provider initializers
+│   │   ├── config/          # Redis, MongoDB, and AI Provider initializers
 │   │   ├── controllers/     # HTTP endpoint handlers
 │   │   ├── middlewares/     # JWT Auth guards, rate limiting, and global error handlers
 │   │   ├── models/          # Schemas (User, Document, Scene, Character, Relationship, etc.)
@@ -261,13 +255,7 @@ REDIS_URL=redis://127.0.0.1:6379
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRY=24h
 
-GEMINI_API_KEY=your_gemini_api_key
-GROQ_API_KEY=your_groq_api_key
-
-AWS_ACCESS_KEY_ID=your_aws_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret
-AWS_S3_BUCKET_NAME=scenecraft-manuscripts
-AWS_REGION=us-east-1
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
 Create a `.env` file inside `frontend/`:
