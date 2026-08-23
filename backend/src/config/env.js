@@ -91,7 +91,7 @@ const config = {
   corsAllowedOrigins: (() => {
     const corsOrigin = envVars.CORS_ORIGIN;
     if (!corsOrigin) {
-      return envVars.NODE_ENV === 'development' ? '*' : [];
+      return '*';
     }
     const origins = corsOrigin.split(',').map((o) => o.trim());
     if (origins.includes('*')) {
