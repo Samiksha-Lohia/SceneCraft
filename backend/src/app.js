@@ -21,7 +21,37 @@ const createApp = () => {
   app.use(helmet());
 
   // ─── CORS ──────────────────────────────────────────────────────────────────
-  app.use(cors({ origin: config.corsAllowedOrigins }));
+  const allowedOrigins = config.corsAllowedOrigins;
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, postman)
+        if (!origin) return callback(null, true);
+
+        // If config specifies '*', allow all origins dynamically
+        if (allowedOrigins === '*') {
+          return callback(null, true);
+        }
+
+        // If allowedOrigins is an array, check if origin is in the list
+        if (Array.isArray(allowedOrigins)) {
+          if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+        }
+
+        // Dynamically allow any vercel.app subdomain (e.g. preview builds) or localhost
+        const isVercel = /\.vercel\.app$/.test(origin);
+        const isLocalhost = /^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+        if (isVercel || isLocalhost) {
+          return callback(null, true);
+        }
+
+        return callback(new Error('Not allowed by CORS'));
+      },
+      credentials: true,
+    })
+  );
 
   // ─── HTTP Request Logging ──────────────────────────────────────────────────
   if (config.env !== 'test') {
