@@ -26,7 +26,7 @@
 
 ## 🌟 Overview
 
-SceneCraft converts raw creative drafts into rich, interactive metadata. Instead of relying on a flat, disposable chatbot response, SceneCraft runs a **9-stage dependency-aware AI analysis pipeline** powered by **OpenRouter** to parse structural, narrative, character, relationship, and emotional details.
+SceneCraft converts raw creative drafts into rich, interactive metadata. Instead of relying on a flat, disposable chatbot response, SceneCraft runs a **10-stage dependency-aware AI analysis pipeline** powered by **OpenRouter** to parse structural, narrative, character, relationship, and emotional details.
 
 All results are stored in a cross-referenced NoSQL database and served through a minimal, paper-inspired notebook interface featuring interactive relationship node graphs, chronologically-reordered timelines, narrative tension charts, and semantic query lookup.
 
