@@ -122,6 +122,31 @@ const parsePdfFallback = (buffer) => {
     }
     
     const dictText = text.slice(dictStart, dictEnd + 2);
+    
+    // Skip non-content streams (images, metadata, fonts, XRef, C2PA claims)
+    if (
+      dictText.includes('/Type /Metadata') ||
+      dictText.includes('/Type/Metadata') ||
+      dictText.includes('/Type /XRef') ||
+      dictText.includes('/Type/XRef') ||
+      dictText.includes('/Type /Font') ||
+      dictText.includes('/Type/Font') ||
+      dictText.includes('/Subtype /Image') ||
+      dictText.includes('/Subtype/Image') ||
+      dictText.includes('/Subtype /XML') ||
+      dictText.includes('/Subtype/XML') ||
+      dictText.includes('/Subtype /c2pa') ||
+      dictText.includes('/Subtype/c2pa') ||
+      dictText.includes('c2pa') ||
+      dictText.includes('/Filter /DCTDecode') ||
+      dictText.includes('/Filter/DCTDecode') ||
+      dictText.includes('/Filter /JPXDecode') ||
+      dictText.includes('/Filter/JPXDecode')
+    ) {
+      streamIdx = streamStart + length;
+      continue;
+    }
+
     const filterMatch = dictText.match(/\/Filter\s*(?:\[([^\]]+)\]|\/([A-Za-z0-9]+))/);
     const lengthMatch = dictText.match(/\/Length\s+(\d+)/);
     
@@ -166,11 +191,16 @@ const parsePdfFallback = (buffer) => {
     streamIdx = streamStart + length;
   }
   
-  if (!extractedText.trim()) {
+  const cleanExtracted = extractedText
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+    .replace(/jumd(?:cbor|c2cl)[^\n]*\n?/gi, '')
+    .trim();
+
+  if (!cleanExtracted) {
     throw new Error('Fallback PDF parsing extracted no text.');
   }
   
-  return extractedText;
+  return cleanExtracted;
 };
 
 const parseTxt = async (source) => {

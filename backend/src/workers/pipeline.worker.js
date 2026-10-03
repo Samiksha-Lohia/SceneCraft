@@ -918,16 +918,20 @@ const runRelationships = async ({ documentId }) => {
         const a = characters[i];
         const b = characters[j];
 
-        const sharedScenes = scenes.filter(
-          (scene) => {
-            const text = scene.rawText || '';
+        const sharedScenes = scenes.filter((scene) => {
+          const text = (scene.rawText || '').toLowerCase();
+          const matchesChar = (char) => {
+            if (char.name && text.includes(char.name.toLowerCase())) return true;
+            if (Array.isArray(char.aliases)) {
+              for (const alias of char.aliases) {
+                if (alias && text.includes(alias.toLowerCase())) return true;
+              }
+            }
+            return false;
+          };
 
-            return (
-              text.includes(a.name) &&
-              text.includes(b.name)
-            );
-          },
-        );
+          return matchesChar(a) && matchesChar(b);
+        });
 
         if (!sharedScenes.length) continue;
 
@@ -988,13 +992,34 @@ const runRelationships = async ({ documentId }) => {
     };
   }
 
-  const prompt = `Analyze the relationships between the characters in this story.
+  const charactersListFormatted = characters
+    .map((c) => {
+      const aliasText = c.aliases?.length ? ` (Aliases / Nicknames: ${c.aliases.join(', ')})` : '';
+      const roleText = c.role ? ` [Role: ${c.role}]` : '';
+      return `- ${c.name}${aliasText}${roleText}${c.description ? `: ${c.description}` : ''}`;
+    })
+    .join('\n');
+
+  const scenesListFormatted = scenes
+    .map(
+      (scene) =>
+        `Scene ${scene.sceneNumber}: "${scene.title}" (ID: ${scene._id})\nText:\n${scene.rawText || scene.summary || ''}`,
+    )
+    .join('\n\n');
+
+  const prompt = `Analyze the relationships and interactions between characters in this story.
+
+Carefully read each scene's text and identify how characters interact, converse, support, oppose, or relate to one another.
+
+Character Name & Alias Handling:
+- Characters may be referred to by their primary names or any of their aliases/nicknames (or first-person pronouns if the narrator).
+- Always map characters back to their exact primary name from the Characters list for characterAName and characterBName.
 
 For each pair of characters that interact in the story, return:
-- characterAName: exact name of character A from the Characters list
-- characterBName: exact name of character B from the Characters list
+- characterAName: exact primary name of character A from the Characters list
+- characterBName: exact primary name of character B from the Characters list
 - type: one of "romantic", "family", "rival", "mentor", "ally", or "other"
-- sentimentScore: number from -1.0 to 1.0
+- sentimentScore: overall sentiment number from -1.0 (strongly hostile/rival) to 1.0 (strongly positive/loving/supportive)
 - interactions: array of objects representing their interactions in specific scenes. Each object must contain:
   * sceneId: The exact ID string (e.g. "60c72b2f9b1d8a25c8d01b52") of the scene from the Scenes list below
   * sentimentScore: sentiment score of their interaction in this scene (number from -1.0 to 1.0)
@@ -1002,26 +1027,18 @@ For each pair of characters that interact in the story, return:
 
 IMPORTANT:
 - Return ONLY a valid JSON array.
+- Every interacting character pair should have an entry in the array.
 - characterAName is REQUIRED.
 - characterBName is REQUIRED.
-- Use the EXACT character names from the Characters list.
-- Do NOT use "characterA", "characterB", "nameA", or "nameB".
-- Do NOT create an object without characterAName and characterBName.
-- If there are no relationships, return [].
+- Use the primary names from the Characters list.
+- If there are no relationships or interactions in the story, return [].
 - Do NOT return markdown or explanations.
 
 Characters list:
-${characters
-  .map((character) => character.name)
-  .join(', ')}
+${charactersListFormatted}
 
 Scenes list:
-${scenes
-  .map(
-    (scene) =>
-      `Scene ${scene.sceneNumber}: "${scene.title}" (ID: ${scene._id})`,
-  )
-  .join('\n')}
+${scenesListFormatted}
 `;
 
   const schemaHint = {
@@ -1292,7 +1309,7 @@ ${scenes
 
   const nameToCharMap = new Map(
     characters.map((character) => [
-      character.name.toLowerCase(),
+      character.name.toLowerCase().trim(),
       character,
     ]),
   );
@@ -1300,26 +1317,59 @@ ${scenes
   for (const character of characters) {
     if (character.aliases) {
       for (const alias of character.aliases) {
-        nameToCharMap.set(
-          alias.toLowerCase(),
-          character,
-        );
+        if (alias && typeof alias === 'string') {
+          nameToCharMap.set(
+            alias.toLowerCase().trim(),
+            character,
+          );
+        }
       }
     }
   }
 
+  const resolveCharacter = (inputName) => {
+    if (!inputName || typeof inputName !== 'string') return null;
+    const clean = inputName.trim().toLowerCase();
+    if (!clean) return null;
+
+    if (nameToCharMap.has(clean)) {
+      return nameToCharMap.get(clean);
+    }
+
+    // Substring / partial matching
+    for (const character of characters) {
+      const charName = character.name.toLowerCase().trim();
+      if (clean === charName || clean.includes(charName) || charName.includes(clean)) {
+        return character;
+      }
+      if (Array.isArray(character.aliases)) {
+        for (const alias of character.aliases) {
+          if (!alias || typeof alias !== 'string') continue;
+          const aliasLower = alias.toLowerCase().trim();
+          if (clean === aliasLower || clean.includes(aliasLower) || aliasLower.includes(clean)) {
+            return character;
+          }
+        }
+      }
+    }
+
+    return null;
+  };
+
   const relationshipsToInsert = [];
+  const processedPairs = new Set();
 
   for (const relationship of validatedRelationships) {
-    const charA = nameToCharMap.get(
-      relationship.characterAName.toLowerCase(),
-    );
-
-    const charB = nameToCharMap.get(
-      relationship.characterBName.toLowerCase(),
-    );
+    const charA = resolveCharacter(relationship.characterAName);
+    const charB = resolveCharacter(relationship.characterBName);
 
     if (!charA || !charB) continue;
+    if (charA._id.toString() === charB._id.toString()) continue;
+
+    // Deduplicate pair
+    const pairKey = [charA._id.toString(), charB._id.toString()].sort().join('_');
+    if (processedPairs.has(pairKey)) continue;
+    processedPairs.add(pairKey);
 
     const sentimentBySceneId = new Map();
     const sceneIds = [];
@@ -2236,4 +2286,8 @@ const runEmbeddings = async ({
 
 export {
   startPipelineWorker,
+  runStage,
+  runScenes,
+  runCharacters,
+  runRelationships,
 };

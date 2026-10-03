@@ -68,7 +68,11 @@ export default function RelationshipsTab({ documentId }) {
       activeCharIds.add(r.characterBId);
     });
 
-    const activeChars = Object.values(characters).filter(c => activeCharIds.has(c._id || c.id));
+    let activeChars = Object.values(characters).filter(c => activeCharIds.has(c._id || c.id));
+    // If no filtered relationships or active IDs, show all characters
+    if (activeChars.length === 0) {
+      activeChars = Object.values(characters);
+    }
     
     // Auto circular layout
     const total = activeChars.length;
@@ -213,16 +217,33 @@ export default function RelationshipsTab({ documentId }) {
 
       {/* Main Graph Canvas */}
       <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs relative flex">
-        <div className="flex-1 h-full min-h-[450px]">
-          <ReactFlow
-            nodes={flowNodes}
-            edges={flowEdges}
-            onEdgeClick={handleEdgeClick}
-            fitView
-          >
-            <Background color="#cbd5e1" gap={20} size={1} />
-            <Controls className="!bg-white !border-slate-200 !shadow-xs rounded-lg" />
-          </ReactFlow>
+        <div className="flex-1 h-full min-h-[450px] relative">
+          {flowNodes.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-50/60">
+              <GitFork className="w-10 h-10 text-slate-300 mb-3" />
+              <p className="font-serif font-bold text-slate-700 text-base">No Characters or Relationships Detected</p>
+              <p className="text-xs text-slate-500 max-w-sm mt-1">
+                Once characters are identified and their interactions analyzed across scenes, their connection network will be mapped here.
+              </p>
+            </div>
+          ) : (
+            <>
+              {flowEdges.length === 0 && (
+                <div className="absolute top-4 left-4 z-10 bg-amber-50/95 border border-amber-200 text-amber-800 text-[11px] px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
+                  <span>Displaying character nodes (no connections match the current filter).</span>
+                </div>
+              )}
+              <ReactFlow
+                nodes={flowNodes}
+                edges={flowEdges}
+                onEdgeClick={handleEdgeClick}
+                fitView
+              >
+                <Background color="#cbd5e1" gap={20} size={1} />
+                <Controls className="!bg-white !border-slate-200 !shadow-xs rounded-lg" />
+              </ReactFlow>
+            </>
+          )}
         </div>
 
         {/* Floating Side Info Panel for Clicked Connections */}
