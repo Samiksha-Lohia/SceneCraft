@@ -1861,21 +1861,45 @@ const runContinuity = async ({
     };
   }
 
+  const charactersFormatted = characters.length
+    ? characters
+        .map((character) => {
+          const aliasList = Array.isArray(character.aliases)
+            ? character.aliases.filter(Boolean)
+            : [];
+          const aliasText = aliasList.length
+            ? ` (Aliases / Nicknames: ${aliasList.join(', ')})`
+            : '';
+          const roleText = character.role ? ` [Role: ${character.role}]` : '';
+          return `- ${character.name}${aliasText}${roleText}`;
+        })
+        .join('\n')
+    : 'No explicit character records found.';
+
   const prompt = `Analyze the following story scenes for continuity errors.
 
-For each character in the list, track their attributes (status e.g. alive/dead/injured, age, appearance, possessions) across the scenes.
+For each character in the list, track their attributes (status e.g. alive/dead/injured, age, physical appearance, clothing, possessions, location) across all scenes in chronological order.
 
-Flag any contradictions, timeline conflicts, or unexplained gaps.
+Character Name & Alias Handling:
+- Characters may be referred to by different names, nicknames, titles, or aliases across different scenes (see character aliases listed below).
+- Do NOT flag the use of alternate names or aliases for the same character as a continuity issue. Treat all aliases for a character as referring to the same individual.
+- Only flag an attribute conflict if the story genuinely contradicts itself regarding a character's state, physical traits, appearance, or possessions (e.g. eye color changing, an injured arm suddenly healed without explanation, or appearing in two impossible places simultaneously).
 
-Return the output as a valid JSON array of continuity issue objects matching the schema.
+Flag any genuine contradictions, timeline conflicts, or unexplained narrative gaps.
+
+Output Rules:
+- If NO continuity errors, contradictions, or unexplained gaps are found, you MUST return an EMPTY JSON array: [].
+- Never create dummy, placeholder, or "empty" issue objects.
+- If you find one or more actual continuity issues, every issue object in the array MUST contain:
+  1. "type": One of "attribute-conflict", "timeline-conflict", or "unexplained-gap".
+  2. "description": A required, non-empty, detailed explanation of the exact contradiction or continuity issue, identifying what contradicts what and why.
+  3. "sceneIds": Array of scene IDs (from the scenes provided below) where the contradiction occurs.
+  4. "severity": One of "low", "medium", or "high".
+- The "description" field is STRICTLY REQUIRED for every issue and MUST contain an actual meaningful explanation. Never generate an empty string "", whitespace only, null, or undefined for "description".
+- Return ONLY the JSON array (or [] if no issues).
 
 Characters:
-${characters
-  .map(
-    (character) =>
-      `- ${character.name}`,
-  )
-  .join('\n')}
+${charactersFormatted}
 
 Scenes:
 ${scenes
@@ -1889,7 +1913,7 @@ ${scenes
   const schemaHint = {
     type: 'ARRAY',
     description:
-      'List of continuity issues found.',
+      'List of continuity issues found. Return an empty array [] if no issues are detected.',
     items: {
       type: 'OBJECT',
       properties: {
@@ -1903,6 +1927,8 @@ ${scenes
         },
         description: {
           type: 'STRING',
+          description:
+            'A required, non-empty, detailed explanation of the continuity issue.',
         },
         sceneIds: {
           type: 'ARRAY',
@@ -1932,58 +1958,134 @@ ${scenes
     await generateJSON(
       prompt,
       schemaHint,
+      STAGES.CONTINUITY,
     );
 
-  const normalizedIssues = normalizeArrayResponse(
-    rawIssues,
-  ).map((issue) => {
-    if (!issue || typeof issue !== 'object') return issue;
+  const rawExtracted = normalizeArrayResponse(rawIssues);
+  const rawArray = Array.isArray(rawExtracted)
+    ? rawExtracted
+    : rawExtracted && typeof rawExtracted === 'object' && Array.isArray(rawExtracted.issues)
+      ? rawExtracted.issues
+      : rawExtracted && typeof rawExtracted === 'object' && Array.isArray(rawExtracted.continuityIssues)
+        ? rawExtracted.continuityIssues
+        : [];
 
-    let type =
-      issue.type ||
-      issue.issueType ||
-      issue.conflictType ||
-      issue.category;
+  const validSceneIdMap = new Map();
+  scenes.forEach((scene) => {
+    validSceneIdMap.set(String(scene._id), String(scene._id));
+    validSceneIdMap.set(String(scene.sceneNumber), String(scene._id));
+    validSceneIdMap.set(`scene ${scene.sceneNumber}`, String(scene._id));
+    validSceneIdMap.set(`scene_${scene.sceneNumber}`, String(scene._id));
+  });
 
-    if (typeof type === 'string') {
-      type = type.toLowerCase().trim().replace('_', '-');
-      if (type === 'attribute' || type === 'attributeconflict') {
+  const normalizedIssues = rawArray
+    .map((issue) => {
+      if (!issue || typeof issue !== 'object') return null;
+
+      const rawDescription =
+        typeof issue.description === 'string'
+          ? issue.description.trim()
+          : typeof issue.explanation === 'string'
+            ? issue.explanation.trim()
+            : typeof issue.details === 'string'
+              ? issue.details.trim()
+              : typeof issue.issue === 'string'
+                ? issue.issue.trim()
+                : '';
+
+      if (!rawDescription) {
+        return null;
+      }
+
+      const isNoIssueText =
+        /^(none|n\/a|no\s+(issues?|continuity\s+errors?|conflicts?)\s*(found)?\.?)$/i.test(
+          rawDescription,
+        );
+      if (isNoIssueText) {
+        return null;
+      }
+
+      let type =
+        issue.type ||
+        issue.issueType ||
+        issue.conflictType ||
+        issue.category;
+
+      if (typeof type === 'string') {
+        type = type.toLowerCase().trim().replace(/[_ ]+/g, '-');
+        if (type === 'attribute' || type === 'attributeconflict') {
+          type = 'attribute-conflict';
+        }
+        if (type === 'timeline' || type === 'timelineconflict') {
+          type = 'timeline-conflict';
+        }
+        if (type === 'gap' || type === 'unexplainedgap') {
+          type = 'unexplained-gap';
+        }
+      }
+
+      if (
+        typeof type === 'string' &&
+        (type === 'none' ||
+          type === 'no-issue' ||
+          type === 'no-issues' ||
+          type === 'no-conflict')
+      ) {
+        return null;
+      }
+
+      const validTypes = [
+        'attribute-conflict',
+        'timeline-conflict',
+        'unexplained-gap',
+      ];
+
+      if (!type || !validTypes.includes(type)) {
         type = 'attribute-conflict';
       }
-      if (type === 'timeline' || type === 'timelineconflict') {
-        type = 'timeline-conflict';
+
+      let severity = issue.severity;
+      if (typeof severity === 'string') {
+        severity = severity.toLowerCase().trim();
       }
-      if (type === 'gap' || type === 'unexplainedgap') {
-        type = 'unexplained-gap';
-      }
-    }
-
-    const validTypes = [
-      'attribute-conflict',
-      'timeline-conflict',
-      'unexplained-gap',
-    ];
-
-    if (!type || !validTypes.includes(type)) {
-      type = 'attribute-conflict';
-    }
-
-    let severity = issue.severity;
-    if (typeof severity === 'string') {
-      severity = severity.toLowerCase().trim();
       const validSeverities = ['low', 'medium', 'high'];
-      if (!validSeverities.includes(severity)) {
+      if (!severity || !validSeverities.includes(severity)) {
         severity = 'medium';
       }
-    }
 
-    return {
-      type,
-      description: issue.description || '',
-      sceneIds: Array.isArray(issue.sceneIds) ? issue.sceneIds : [],
-      severity: severity || 'medium',
-    };
-  });
+      let rawSceneIds = [];
+      if (Array.isArray(issue.sceneIds)) {
+        rawSceneIds = issue.sceneIds;
+      } else if (Array.isArray(issue.scenes)) {
+        rawSceneIds = issue.scenes;
+      } else if (issue.sceneId) {
+        rawSceneIds = [issue.sceneId];
+      }
+
+      const resolvedSceneIds = [];
+      for (const rawId of rawSceneIds) {
+        const strId = String(rawId).trim().toLowerCase();
+        if (validSceneIdMap.has(strId)) {
+          const mappedId = validSceneIdMap.get(strId);
+          if (!resolvedSceneIds.includes(mappedId)) {
+            resolvedSceneIds.push(mappedId);
+          }
+        } else if (mongoose.Types.ObjectId.isValid(rawId)) {
+          const strOrig = String(rawId);
+          if (!resolvedSceneIds.includes(strOrig)) {
+            resolvedSceneIds.push(strOrig);
+          }
+        }
+      }
+
+      return {
+        type,
+        description: rawDescription,
+        sceneIds: resolvedSceneIds,
+        severity,
+      };
+    })
+    .filter(Boolean);
 
   const continuityJoi = Joi.array()
     .items(
@@ -1996,8 +2098,10 @@ ${scenes
           )
           .required(),
 
-        description:
-          Joi.string().required(),
+        description: Joi.string()
+          .trim()
+          .min(1)
+          .required(),
 
         sceneIds: Joi.array()
           .items(Joi.string())
